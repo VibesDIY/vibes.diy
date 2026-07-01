@@ -26,12 +26,31 @@ export default function PickathonPicker() {
   const { database, useLiveQuery, useDocument } = useFireproof("pickathon");
   const { can, ready } = useVibe("pickathon");
 
-  const myHandle = viewer?.userHandle || "anonymous";
-  const userId = myHandle;
+  // Logged-out visitors get a stable per-device id so their favorites are their
+  // own (the server has no identity for anon writes — user is null there). It is
+  // client-minted and therefore spoofable, which is fine for festival picks.
+  const anonId = useMemo(() => {
+    try {
+      let id = localStorage.getItem("pickathon-anon-id");
+      if (!id) {
+        id = "anon-" + (globalThis.crypto?.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36));
+        localStorage.setItem("pickathon-anon-id", id);
+      }
+      return id;
+    } catch (e) {
+      return "anonymous";
+    }
+  }, []);
 
-  // Gate every write surface on the app's own access.js via useVibe().can — the
-  // same function the server enforces. useViewer() is identity/display only.
-  const canWrite = ready && Boolean(can?.create?.({ type: "favorite", userId: myHandle })?.ok);
+  const myHandle = viewer?.userHandle || anonId;
+  const userId = myHandle;
+  const signedIn = Boolean(viewer?.userHandle);
+
+  // Favorites are public + allowAnonymous, so anyone (incl. logged out) may save
+  // them; notes/shifts/friends route to per-user channels and need a real login.
+  // Gate on the app's own access.js via useVibe().can — the same fn the server runs.
+  const canFavorite = ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok);
+  const canWrite = ready && signedIn && Boolean(can?.create?.({ type: "shift", userId })?.ok);
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -478,15 +497,20 @@ export default function PickathonPicker() {
           {error && error.includes("cached") && (
             <div className={`mt-2 ${c.pinkBg} text-white px-3 py-2 rounded-lg text-sm font-bold`}>{error}</div>
           )}
-          {!canWrite && <div className={c.readOnlyBanner}>Sign in to save your favorites and build your schedule.</div>}
+          {!canWrite && (
+            <div className={c.readOnlyBanner}>Sign in via the Vibes DIY logo to share your schedule with friends.</div>
+          )}
         </div>
 
         <div className={`${c.navBg} mx-2 mb-2 ${c.border} p-8 rounded-b-3xl`}>
           <div className="flex flex-wrap gap-3">
             {["now", "browse", "bands", "favorites", "friends", "shifts", "schedule"]
-              .filter(
-                (v) => v === "now" || v === "browse" || v === "bands" || (v === "favorites" ? superMode && canWrite : canWrite)
-              )
+              .filter((v) => {
+                if (v === "now" || v === "browse" || v === "bands") return true;
+                if (v === "favorites") return superMode && canWrite; // super-mode peer picker
+                if (v === "schedule") return canFavorite; // anon can view their own favorites schedule
+                return canWrite; // friends + extras need a real sign-in
+              })
               .map((viewName) => (
                 <button key={viewName} onClick={() => setView(viewName)} className={c.navBtn(view === viewName)}>
                   {viewName === "now" && `Now`}
@@ -519,7 +543,7 @@ export default function PickathonPicker() {
               nowTick={nowTick}
               myFavIds={myFavIds}
               friendFavIds={friendFavIds}
-              canWrite={canWrite}
+              canWrite={canFavorite}
               toggleFavorite={toggleFavorite}
               c={c}
             />
@@ -535,6 +559,7 @@ export default function PickathonPicker() {
               displayDays={displayDays}
               myFavIds={myFavIds}
               canWrite={canWrite}
+              canFavorite={canFavorite}
               toggleFavorite={toggleFavorite}
               eventNotes={eventNotes}
               focusedNote={focusedNote}
@@ -553,7 +578,7 @@ export default function PickathonPicker() {
             <BandsView
               bandsList={bandsList}
               myFavIds={myFavIds}
-              canWrite={canWrite}
+              canWrite={canFavorite}
               toggleFavorite={toggleFavorite}
               favCounts={favCounts}
               superMode={superMode}
@@ -571,7 +596,7 @@ export default function PickathonPicker() {
               setViewingUser={setViewingUser}
               userId={userId}
               myFavIds={myFavIds}
-              canWrite={canWrite}
+              canWrite={canFavorite}
               toggleFavorite={toggleFavorite}
               notes={notes}
               ViewerTag={ViewerTag}
@@ -642,7 +667,7 @@ export default function PickathonPicker() {
                 onNoteFocus={handleNoteFocus}
                 canWrite={canWrite}
                 focusedNote={focusedNote}
-                onToggleFavorite={canWrite ? toggleFavorite : null}
+                onToggleFavorite={canFavorite ? toggleFavorite : null}
                 myFavIds={myFavIds}
                 allEvents={events}
                 showGaps={true}

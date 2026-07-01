@@ -11,6 +11,7 @@ export default function BrowseView({
   displayDays,
   myFavIds,
   canWrite,
+  canFavorite,
   toggleFavorite,
   eventNotes,
   focusedNote,
@@ -98,7 +99,7 @@ export default function BrowseView({
                   ) : null}
                 </div>
                 <div className="flex gap-2">
-                  {canWrite && (
+                  {canFavorite && (
                     <button
                       onClick={() => toggleFavorite(event)}
                       className={myFavIds.has(event.eventId) ? c.favToggleOn : c.favToggleOff}
