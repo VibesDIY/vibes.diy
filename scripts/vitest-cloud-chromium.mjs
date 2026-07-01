@@ -80,16 +80,21 @@ export function cloudChromiumProviderOptions() {
 /**
  * Is the chrome-headless-shell build the installed Playwright expects present in
  * `dir`? Reads the wanted revision from playwright-core's browsers.json (the
- * source of truth) so it tracks Playwright bumps automatically. When the
- * revision can't be determined, returns false so callers prefer the safe
- * full-Chromium fallback.
+ * source of truth) so it tracks Playwright bumps automatically, then checks for
+ * Playwright's own `INSTALLATION_COMPLETE` marker rather than guessing the
+ * binary's inner path — that path differs across Playwright versions and
+ * platforms (e.g. chrome-linux/headless_shell vs chrome-headless-shell-linux64/
+ * chrome-headless-shell), so the marker is the version-agnostic signal (it's
+ * exactly what scripts/install-pw-chromium.sh keys its idempotency check on).
+ * When the revision can't be determined, returns false so callers prefer the
+ * safe full-Chromium fallback.
  * @param {string} dir
  * @returns {boolean}
  */
 function expectedHeadlessShellPresent(dir) {
   const rev = expectedChromiumRevision("chromium-headless-shell");
   if (!rev) return false;
-  return existsSync(join(dir, `chromium_headless_shell-${rev}`, "chrome-linux", "chrome-headless-shell"));
+  return existsSync(join(dir, `chromium_headless_shell-${rev}`, "INSTALLATION_COMPLETE"));
 }
 
 /**
