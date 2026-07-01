@@ -2,5 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist"
-  }
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules", "dist", "vitest.browser.config.ts", "vitest.config.ts", "vitest.node.config.ts"]
 }
