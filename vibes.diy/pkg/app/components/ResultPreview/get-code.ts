@@ -3,11 +3,12 @@ import { AppCode } from "../../types/code-editor.js";
 import type { PromptState } from "../../routes/chat/prompt-state.js";
 
 // Files the AI may emit alongside `App.jsx` that are NOT part of the rendered
-// preview. `access.js` is a server-side access function — it never runs in the
-// sandbox iframe — so its edits must be routed to a separate buffer and never
-// resolved as the preview source.
+// preview. `access.js` (access function) and `backend.js` (backend handlers,
+// #2856) are server-side — they never run in the sandbox iframe — so their
+// edits must be routed to separate buffers and never resolved as the preview
+// source.
 const DEFAULT_PATH = "App.jsx";
-const SERVER_ONLY_PATHS = new Set(["access.js"]);
+const SERVER_ONLY_PATHS = new Set(["access.js", "backend.js"]);
 
 // Seeded/hydrated filesystem blocks carry leading-slash filenames (`/App.jsx`,
 // `/access.js`) while fresh model edits stream bare (`App.jsx`). Strip any
