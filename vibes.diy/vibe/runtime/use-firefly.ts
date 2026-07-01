@@ -143,19 +143,58 @@ export function useFireproof(
   const useLocal = anonymousLocal && !signedIn && !!localDb && !hasAuthedBefore(name);
   const database: FireflyQueryDatabase = useLocal && localDb ? localDb : cloudDb;
 
-  // On first sign-in: mark the device as authed and migrate any local docs into
-  // the cloud exactly once, then clear local storage (migrateLocalToCloud only
-  // clears on full success, so a failed migration keeps local data recoverable).
-  const migratedRef = useRef(false);
+  // Keep the latest migrate callback in a ref so an inline app-supplied function
+  // (new identity every render) doesn't re-trigger the migration effect below.
+  const migrateRef = useRef(migrate);
+  migrateRef.current = migrate;
+
+  // On first sign-in: mark the device as authed, then migrate local docs into the
+  // cloud and clear local storage. migrateLocalToCloud only clears on full
+  // success, so a failed migration keeps local data recoverable — and we retry
+  // with bounded backoff in-session, since signed-in reads are cloud-backed and a
+  // transient network/access failure must not strand the local docs (making them
+  // look "gone") until a reload. Only mark "done" on success or after exhausting
+  // attempts; a later remount retries from scratch (#2988).
+  const migrationRef = useRef<"idle" | "running" | "done">("idle");
   useEffect(() => {
-    if (!anonymousLocal || !signedIn || !userHandle) return;
+    if (!anonymousLocal || !signedIn || !userHandle || !localDb) return;
     markAuthedBefore(name);
-    if (migratedRef.current || !localDb) return;
-    migratedRef.current = true;
-    void migrateLocalToCloud(localDb, cloudDb, userHandle, migrate).catch((e: unknown) => {
-      console.error(`anonymousLocal migration failed for db "${name}":`, e);
-    });
-  }, [anonymousLocal, signedIn, userHandle, localDb, cloudDb, name, migrate]);
+    if (migrationRef.current !== "idle") return;
+    migrationRef.current = "running";
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const run = async () => {
+      const maxAttempts = 5;
+      for (let attempt = 1; attempt <= maxAttempts && !cancelled; attempt++) {
+        try {
+          await migrateLocalToCloud(localDb, cloudDb, userHandle, migrateRef.current);
+          migrationRef.current = "done";
+          return;
+        } catch (e: unknown) {
+          if (cancelled) return;
+          if (attempt === maxAttempts) {
+            // Give up for this session — local storage is untouched (no data
+            // loss), so a later remount retries from a fresh "idle" ref.
+            migrationRef.current = "done";
+            console.error(`anonymousLocal migration failed for db "${name}" after ${attempt} attempts:`, e);
+            return;
+          }
+          // Exponential backoff: 0.5s, 1s, 2s, 4s.
+          await new Promise<void>((resolve) => {
+            timer = setTimeout(resolve, 500 * 2 ** (attempt - 1));
+          });
+        }
+      }
+      // Interrupted before completing (unmount / dep change) — allow a retry.
+      if (cancelled && migrationRef.current === "running") migrationRef.current = "idle";
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      if (migrationRef.current === "running") migrationRef.current = "idle";
+    };
+  }, [anonymousLocal, signedIn, userHandle, localDb, cloudDb, name]);
 
   const useDocument = useMemo(() => createUseDocument(database), [database]);
   const useLiveQuery = useMemo(() => createUseLiveQuery(database), [database]);
