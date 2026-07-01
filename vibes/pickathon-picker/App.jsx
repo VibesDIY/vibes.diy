@@ -21,35 +21,41 @@ import FavoritesView from "./FavoritesView.jsx";
 import FriendsView from "./FriendsView.jsx";
 import ShiftsView from "./ShiftsView.jsx";
 
+// Logged-out favorites live entirely in localStorage — no Fireproof write at all
+// (the server has no identity for anonymous writes). On first sign-in they are
+// copied into Fireproof and this key is cleared. Just a list of eventIds.
+const LOCAL_FAV_KEY = "pickathon-local-favorites";
+const readLocalFavs = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem(LOCAL_FAV_KEY) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch (e) {
+    return [];
+  }
+};
+const writeLocalFavs = (ids) => {
+  try {
+    localStorage.setItem(LOCAL_FAV_KEY, JSON.stringify(ids));
+  } catch (e) {
+    /* storage unavailable — favorites stay in-memory for this session */
+  }
+};
+
 export default function PickathonPicker() {
   const { viewer, ViewerTag } = useViewer();
   const { database, useLiveQuery, useDocument } = useFireproof("pickathon");
   const { can, ready } = useVibe("pickathon");
 
-  // Logged-out visitors get a stable per-device id so their favorites are their
-  // own (the server has no identity for anon writes — user is null there). It is
-  // client-minted and therefore spoofable, which is fine for festival picks.
-  const anonId = useMemo(() => {
-    try {
-      let id = localStorage.getItem("pickathon-anon-id");
-      if (!id) {
-        id = "anon-" + (globalThis.crypto?.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36));
-        localStorage.setItem("pickathon-anon-id", id);
-      }
-      return id;
-    } catch (e) {
-      return "anonymous";
-    }
-  }, []);
-
-  const myHandle = viewer?.userHandle || anonId;
+  const myHandle = viewer?.userHandle || "anonymous";
   const userId = myHandle;
   const signedIn = Boolean(viewer?.userHandle);
 
-  // Favorites are public + allowAnonymous, so anyone (incl. logged out) may save
-  // them; notes/shifts/friends route to per-user channels and need a real login.
-  // Gate on the app's own access.js via useVibe().can — the same fn the server runs.
-  const canFavorite = ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok);
+  // Anonymous favorites are device-local (localStorage); signed-in favorites are
+  // Fireproof-backed and synced. Everyone can favorite; notes/shifts/friends route
+  // to per-user channels and need a real login. Gate on the app's own access.js
+  // via useVibe().can — the same fn the server runs.
+  const [localFavs, setLocalFavs] = useState(readLocalFavs);
+  const canFavorite = !signedIn || (ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok));
   const canWrite = ready && signedIn && Boolean(can?.create?.({ type: "shift", userId })?.ok);
 
   const [events, setEvents] = useState([]);
@@ -72,6 +78,28 @@ export default function PickathonPicker() {
     const id = setInterval(() => setNowTick(Date.now()), 30000);
     return () => clearInterval(id);
   }, []);
+
+  // On first sign-in, migrate any device-local favorites into Fireproof, then
+  // clear localStorage. Deterministic _id keeps it idempotent (a re-run overwrites
+  // the same docs rather than duplicating), so a partial failure is safe to retry.
+  useEffect(() => {
+    if (!signedIn) return;
+    const pending = readLocalFavs();
+    if (pending.length === 0) return;
+    (async () => {
+      try {
+        await Promise.all(
+          pending.map((eventId) =>
+            database.put({ _id: `favorite-${userId}-${eventId}`, type: "favorite", eventId, userId })
+          )
+        );
+        writeLocalFavs([]);
+        setLocalFavs([]);
+      } catch (e) {
+        console.error("Failed to migrate local favorites:", e);
+      }
+    })();
+  }, [signedIn, userId, database]);
 
   useEffect(() => {
     try {
@@ -217,7 +245,8 @@ export default function PickathonPicker() {
   }, [allFavorites]);
 
   const myFavorites = allFavorites.filter((f) => (f.userId || "anonymous") === userId);
-  const myFavIds = new Set(myFavorites.map((f) => f.eventId));
+  // Signed-in favorites come from Fireproof; logged-out ones from localStorage.
+  const myFavIds = signedIn ? new Set(myFavorites.map((f) => f.eventId)) : new Set(localFavs);
 
   const { docs: friends } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["friend", userId] });
   const { docs: friendedBy } = useLiveQuery((doc) => [doc.type, doc.friendSlug], { key: ["friend", userId] });
@@ -300,6 +329,15 @@ export default function PickathonPicker() {
   };
 
   const toggleFavorite = async (event) => {
+    // Logged out: purely local, no network. Signed in: Fireproof + sync.
+    if (!signedIn) {
+      setLocalFavs((prev) => {
+        const next = prev.includes(event.eventId) ? prev.filter((id) => id !== event.eventId) : [...prev, event.eventId];
+        writeLocalFavs(next);
+        return next;
+      });
+      return;
+    }
     if (myFavIds.has(event.eventId)) {
       const fav = myFavorites.find((f) => f.eventId === event.eventId);
       if (fav) await database.del(fav._id);
