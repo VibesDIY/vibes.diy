@@ -720,7 +720,7 @@ export default function PickathonPicker() {
       </div>
 
       {!signedIn && (
-        <div className="fixed right-3 bottom-20 z-40 max-w-[80vw] pointer-events-none">
+        <div className="fixed right-24 bottom-4 z-40 max-w-[52vw] pointer-events-none">
           <div className={c.signInCallout}>
             {linkedFriend
               ? "Sign in via the Vibes DIY logo to add friends"

@@ -36,7 +36,8 @@ export const c = {
   spinner: "w-4 h-4 m-2 rounded-full animate-spin",
   readOnlyBanner: "mt-2 bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] px-7 py-6 rounded-lg text-sm font-bold m-2",
   // A callout that sits by the Vibes switch (logo) at the bottom of the screen.
-  signInCallout: "bg-[#181a20] text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold border-2 border-white/20 max-w-[80vw]",
+  signInCallout:
+    "bg-[#181a20] text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold border-2 border-white/20 text-left leading-snug",
 };
 
 export const lineupTag = (event) => {
