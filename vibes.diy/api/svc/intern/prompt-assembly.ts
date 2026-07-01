@@ -198,6 +198,11 @@ export async function assemblePromptPayload(
   Result<{
     model: string;
     messages: ChatMessage[];
+    // The structural theme this turn was assembled against (the `active.theme`
+    // read here). Callers persist THIS after a successful turn — never a fresh
+    // read at completion time — so an in-flight theme change can't record a
+    // theme the turn never generated against (see persistCodegenThemeMarker).
+    codegenTheme?: string;
   }>
 > {
   const { chatId, model, newUserMessages } = args;
@@ -269,6 +274,10 @@ export async function assemblePromptPayload(
       title,
       enrichedPrompt: includeTheme ? enrichedPrompt : undefined,
       demoData: false,
+      // When we hide an existing theme on a follow-up, also drop the default
+      // style fallback — otherwise makeBaseSystemPrompt substitutes the built-in
+      // neobrutalist style for the withheld theme and keeps restyling the app.
+      suppressDefaultStylePrompt: !includeTheme && Boolean(theme),
       variant: isInitial ? "initial" : "continuation",
       pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
       fetch: createPromptAssetFetch({ fetchAsset: vctx.fetchAsset }),
@@ -377,6 +386,7 @@ export async function assemblePromptPayload(
       ...slotChatMessages,
       ...finalNewUser,
     ],
+    codegenTheme: theme,
   });
 }
 
@@ -389,6 +399,13 @@ export async function assemblePromptPayload(
  * re-injected. Idempotent — writes only when the marker is stale, so ordinary
  * follow-ups that don't touch the theme incur no write.
  *
+ * `theme` MUST be the theme captured at assembly time (`assemblePromptPayload`'s
+ * `codegenTheme`), NOT a fresh read of `active.theme` at completion. If the user
+ * changes the theme while this turn is in flight, `active.theme` already holds
+ * the new value at completion; recording that would mark a theme this turn never
+ * generated against, and the next theme-change turn would then see marker ==
+ * active and skip the design block. Recording the assembled theme avoids that.
+ *
  * Best-effort: a failure here only means the next turn may re-send the theme
  * design once, so callers can ignore the result rather than fail the turn.
  * Keyed by (userId, ownerHandle, appSlug) to match the app_settings PK; for
@@ -396,11 +413,11 @@ export async function assemblePromptPayload(
  */
 export async function persistCodegenThemeMarker(
   vctx: VibesApiSQLCtx,
-  args: { readonly userId: string; readonly ownerHandle: string; readonly appSlug: string }
+  args: { readonly userId: string; readonly ownerHandle: string; readonly appSlug: string; readonly theme?: string }
 ): Promise<void> {
   const t = vctx.sql.tables.appSettings;
   const row = await vctx.sql.db
-    .select({ userId: t.userId, settings: t.settings })
+    .select({ settings: t.settings })
     .from(t)
     .where(and(eq(t.appSlug, args.appSlug), eq(t.ownerHandle, args.ownerHandle), eq(t.userId, args.userId)))
     .limit(1)
@@ -408,13 +425,12 @@ export async function persistCodegenThemeMarker(
   if (row === undefined) return;
 
   const { filtered } = parseArrayWarning((row.settings ?? []) as ActiveEntry[], ActiveEntry);
-  const activeTheme = filtered.find(isActiveTheme)?.theme;
   const markedTheme = filtered.findLast(isActiveCodegenTheme)?.theme;
-  if ((activeTheme ?? "") === (markedTheme ?? "")) return;
+  if ((args.theme ?? "") === (markedTheme ?? "")) return;
 
   const next: ActiveEntry[] = [
     ...filtered.filter((e) => !isActiveCodegenTheme(e)),
-    ...(activeTheme ? [{ type: "active.codegen-theme", theme: activeTheme } satisfies ActiveCodegenTheme] : []),
+    ...(args.theme ? [{ type: "active.codegen-theme", theme: args.theme } satisfies ActiveCodegenTheme] : []),
   ];
   await vctx.sql.db
     .update(t)
