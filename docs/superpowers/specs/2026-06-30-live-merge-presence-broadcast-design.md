@@ -144,9 +144,6 @@ export const evtDocEphemeral = type({
 
 export const evtDocEphemeralDrop = type({
   type: "'vibes.diy.evt-doc-ephemeral-drop'",
-  ownerHandle: "string",
-  appSlug: "string",
-  dbName: "string",
   originPeer: "string",
 });
 ```
@@ -300,7 +297,8 @@ Two mechanisms, because a clean close is not guaranteed:
   `originPeer` matches (via `peerDocs`), then `notifyListeners` the affected
   `_id`s, so a departed user's cursor vanishes immediately. A shared-`_id` slice
   last written by a still-connected peer survives, because each slice records its
-  writer.
+  writer. Drop carries only `originPeer`; the per-vibe DO scopes it and slices
+  record their writer.
 - **Receiver TTL backstop.** A clean WS close isn't always delivered (crash,
   network partition, mobile backgrounding). So each overlay slice also carries a
   last-seen timestamp and expires after a slice-level TTL (~10–15s default,
