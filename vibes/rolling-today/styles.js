@@ -31,7 +31,12 @@ export const c = {
   timeRow: "flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2",
   time: "font-black text-[1.5rem] sm:text-[1.8rem] leading-none tracking-tight text-[#E83D6F]",
   endTime: "text-[0.85rem] text-[#1A1A1A]/70 font-bold",
-  title: "font-black uppercase tracking-tight text-[1.3rem] sm:text-[1.55rem] leading-tight mb-3",
+  titleRow: "flex items-start gap-2.5 mb-3",
+  title: "font-black uppercase tracking-tight text-[1.3rem] sm:text-[1.55rem] leading-tight",
+  // Star favorite toggle that leads the ride title. Filled pink when on, outlined when off.
+  favStar:
+    "shrink-0 -ml-0.5 mt-[2px] text-[#1A1A1A]/35 hover:text-[#E83D6F] hover:scale-110 active:scale-95 transition-all disabled:opacity-40",
+  favStarOn: "shrink-0 -ml-0.5 mt-[2px] text-[#E83D6F] hover:scale-110 active:scale-95 transition-all",
   badgeRow: "flex flex-wrap gap-2 mb-3",
   badge: "inline-flex items-center gap-1.5 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wider border-2 border-[#1A1A1A]",
   badgeAud: "bg-[#FFCB05]",
@@ -49,8 +54,6 @@ export const c = {
   actionCal: "bg-[#C6F08C]",
   actionLink: "bg-[#7DD3FC]",
   actionWeb: "bg-[#FFFDF5]",
-  actionFavOff: "bg-[#FFFDF5] text-[#1A1A1A]",
-  actionFavOn: "bg-[#E83D6F] text-[#FFFDF5]",
   favStrip: "flex items-center flex-wrap gap-x-3 gap-y-1 mb-3",
   favLabel: "text-[0.7rem] uppercase tracking-[0.18em] font-bold text-[#1A1A1A]/70",
   avatarPile: "flex items-center -space-x-2",
