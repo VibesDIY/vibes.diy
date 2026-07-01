@@ -31,10 +31,6 @@ function isPinned(pinnedAt: string | undefined): boolean {
   return pinnedAt !== undefined && pinnedAt.length > 0;
 }
 
-function isUnpublished(unpublishedAt: string | undefined): boolean {
-  return unpublishedAt !== undefined && unpublishedAt.length > 0;
-}
-
 function displayTitle(item: { title?: string; appSlug: string }): string {
   return item.title !== undefined && item.title.length > 0 ? item.title : item.appSlug;
 }
@@ -51,7 +47,10 @@ interface RecentVibesProps {
 
 export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false }: RecentVibesProps) {
   const { isSignedIn } = useAuth();
-  const { items, loading, error, refresh, mutate } = useRecentVibes(20);
+  // Ask the server to omit tombstoned vibes: the sidebar only fetches page 1,
+  // so filtering them client-side would truncate the list and never page to
+  // older still-published vibes (#2980).
+  const { items, loading, error, refresh, mutate } = useRecentVibes(20, { includeUnpublished: false });
   const { sharedApi } = useVibesDiy();
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -67,10 +66,6 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (!isSignedIn) return null;
-
-  // Deleting a vibe soft-tombstones it (setUnpublish); those rows stay in the
-  // API payload for restore elsewhere but must not appear in the sidebar.
-  const visibleItems = items.filter((item) => !isUnpublished(item.unpublishedAt));
 
   async function handlePinToggle(item: ResRecentVibesItem) {
     const key = rowKey(item);
@@ -135,9 +130,9 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
       setDeleteError(res.Err().message);
       return;
     }
-    // Mark the row unpublished locally so it drops out of `visibleItems`
-    // immediately; the next refresh returns it already tombstoned.
-    mutate((prev) => prev.map((row) => (rowKey(row) === key ? { ...row, unpublishedAt: res.Ok().unpublishedAt } : row)));
+    // Drop the row locally so it disappears immediately; the next refresh
+    // re-queries with includeUnpublished:false and won't return it anyway.
+    mutate((prev) => prev.filter((row) => rowKey(row) !== key));
     setDeletingItem(null);
     notifyRecentVibesChanged();
   }
@@ -154,14 +149,14 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
         <div className="flex justify-center py-2">
           <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
         </div>
-      ) : error && visibleItems.length === 0 ? (
+      ) : error && items.length === 0 ? (
         <div className="px-4 pb-1 text-xs">
           <p className="opacity-60">Couldn&apos;t load recent vibes.</p>
           <button type="button" onClick={() => void refresh()} className="mt-1 underline opacity-80 hover:opacity-100">
             Retry
           </button>
         </div>
-      ) : visibleItems.length > 0 ? (
+      ) : items.length > 0 ? (
         <>
           {!hideTitle && (
             <h3 className="sticky -top-3 bg-light-background-00 dark:bg-dark-background-00 px-4 pt-7 pb-2 text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50 z-10">
@@ -169,7 +164,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
             </h3>
           )}
           <ul className="ml-3">
-            {visibleItems.map((item) => {
+            {items.map((item) => {
               const key = rowKey(item);
               const isEditing = editingId === key;
               const menuOpen = openMenuId === key;

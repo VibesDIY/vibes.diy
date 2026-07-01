@@ -110,6 +110,12 @@ export const listRecentVibesEvento: EventoHandler<
       const settings = vctx.sql.tables.appSettings;
 
       const conditions: SQL[] = [eq(usb.userId, userId)];
+      // Sidebar (and any caller that can't paginate past tombstones) opts out
+      // of unpublished rows server-side, so the limit/cursor count only visible
+      // rows instead of the client filtering a fixed page down to fewer (#2980).
+      if (req.includeUnpublished === false) {
+        conditions.push(eq(asb.unpublishedAt, ""));
+      }
       if (req.cursor) {
         const rDecoded = decodeCursor(req.cursor);
         if (rDecoded.isErr()) {

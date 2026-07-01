@@ -249,6 +249,12 @@ export const reqListRecentVibes = type({
   auth: dashAuthType,
   "limit?": "number",
   "cursor?": "string",
+  // When false, the server drops soft-unpublished (tombstoned) rows before
+  // applying limit/cursor, so a paginated view (e.g. the sidebar, which only
+  // ever fetches page 1) isn't silently truncated by client-side filtering.
+  // Absent/true preserves the legacy behavior of including tombstones for
+  // owner restore surfaces (#2688).
+  "includeUnpublished?": "boolean",
 });
 export type ReqListRecentVibes = typeof reqListRecentVibes.infer;
 export function isReqListRecentVibes(obj: unknown): obj is ReqListRecentVibes {

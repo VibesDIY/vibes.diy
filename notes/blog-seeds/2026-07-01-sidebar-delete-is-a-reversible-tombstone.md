@@ -27,10 +27,29 @@ frontend's `Conn<"shared">` view couldn't see it. Exposing it was a two-line
 interface edit (the shard policy already listed `req-set-unpublish` as
 `ALL_SHARDS`).
 
-So "Delete" = `setUnpublish({ unpublish: true })`, and the sidebar filters out
-any row with `unpublishedAt` so a deleted vibe disappears immediately. Nothing
-is destroyed; `/vibes/mine` still lists tombstoned vibes, preserving a restore
-surface. The confirmation copy says as much rather than implying a wipe.
+So "Delete" = `setUnpublish({ unpublish: true })`. Nothing is destroyed;
+`/vibes/mine` still lists tombstoned vibes, preserving a restore surface. The
+confirmation copy says as much rather than implying a wipe.
+
+## The gotcha the reviewer caught: don't filter a paginated list client-side
+
+The first cut filtered tombstoned rows out of the sidebar in React. A reviewer
+(Codex) flagged it: the sidebar only ever fetches page 1 (`useRecentVibes(20)`,
+no infinite scroll), and `list-recent-vibes` intentionally *includes* tombstones
+for the owner's restore view. So filtering that fixed page client-side shows
+`20 − N` rows and never follows `nextCursor` to the older still-published vibes
+below — delete enough recent vibes and the sidebar silently truncates or empties
+even though you have plenty of live ones. (It doesn't flood the top, at least:
+`setUnpublish` writes only `unpublishedAt`, never bumps `updated`, so tombstones
+keep their recency slot.)
+
+The fix moves the exclusion server-side behind an opt-in flag:
+`listRecentVibes({ includeUnpublished: false })` drops tombstones *before* the
+`limit`/cursor, so page 1 is 20 *visible* rows and pagination stays honest.
+Default stays `true` so `/vibes/mine` (the restore surface) is untouched, and
+absent-field calls keep the exact wire shape — the old hook test asserting
+`toHaveBeenCalledWith({ limit: 1 })` still passes because the flag is only added
+when you opt out.
 
 ## Gotcha worth a post
 
