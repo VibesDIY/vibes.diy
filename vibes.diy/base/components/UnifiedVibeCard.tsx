@@ -58,6 +58,9 @@ export interface UnifiedVibeCardProps {
   /** Create a new handle ("New handle" row). Receives the user's chosen slug from
    *  the inline form, or no argument when the server should mint a random one. */
   onNewHandle?: (handle?: string) => void;
+  /** Sign the account out ("Log out" row, pinned to the bottom of the handle
+   *  picker). Omit to hide the row. */
+  onLogout?: () => void;
   /** Upload a new avatar for the active handle. When provided, the header tag's
    *  avatar becomes the click-to-edit affordance (the runtime ViewerTag's me-mode
    *  reused here): clicking the avatar opens a file picker and runs the host's
@@ -314,7 +317,10 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                       handles={props.handles ?? []}
                       activeSlug={props.handleSlug}
                       busy={props.handlePickerBusy}
-                      placement="down"
+                      // Opens ABOVE the header tag — there's usually more room over
+                      // the card than under it, so a long (now-scrollable) roster
+                      // has somewhere to go (vibe-handles-menu-scroll).
+                      placement="up"
                       onSelect={(slug) => {
                         props.onSelectHandle?.(slug);
                         setPickerOpen(false);
@@ -323,6 +329,14 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                         props.onNewHandle?.(handle);
                         setPickerOpen(false);
                       }}
+                      onLogout={
+                        props.onLogout
+                          ? () => {
+                              props.onLogout?.();
+                              setPickerOpen(false);
+                            }
+                          : undefined
+                      }
                     />
                   )}
                 </div>

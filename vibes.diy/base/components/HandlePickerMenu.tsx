@@ -37,6 +37,9 @@ export interface HandlePickerMenuProps {
   /** Which way the menu opens relative to its anchor. Default "down" (the card
    *  header tag sits at the top, so the menu drops below it). */
   readonly placement?: "up" | "down";
+  /** Sign the account out. When provided, a "Log out" row is pinned to the bottom
+   *  of the menu (below the handle list + "New handle"). Omit to hide it. */
+  readonly onLogout?: () => void;
   readonly style?: React.CSSProperties;
 }
 
@@ -54,6 +57,7 @@ export function HandlePickerMenu({
   onNewHandle,
   busy,
   placement = "down",
+  onLogout,
   style,
 }: HandlePickerMenuProps): React.ReactElement {
   // Clicking "New handle" reveals an inline form so you can make one up (#vibe-switch),
@@ -84,17 +88,21 @@ export function HandlePickerMenu({
       <div className="text-light-secondary dark:text-dark-secondary" style={{ fontSize: 11, padding: "4px 8px" }}>
         Acting as
       </div>
-      {handles.map((h) => (
-        <HandleRow
-          key={h.slug}
-          slug={h.slug}
-          label={h.displayName ?? `@${h.slug}`}
-          avatarUrl={h.avatarUrl}
-          active={h.slug === activeSlug}
-          disabled={busy}
-          onClick={() => onSelect?.(h.slug)}
-        />
-      ))}
+      {/* The handle list scrolls on its own so a long roster can't push the
+          "New handle" / "Log out" rows off-screen (vibe-handles-menu-scroll). */}
+      <div style={{ maxHeight: "40vh", overflowY: "auto" }}>
+        {handles.map((h) => (
+          <HandleRow
+            key={h.slug}
+            slug={h.slug}
+            label={h.displayName ?? `@${h.slug}`}
+            avatarUrl={h.avatarUrl}
+            active={h.slug === activeSlug}
+            disabled={busy}
+            onClick={() => onSelect?.(h.slug)}
+          />
+        ))}
+      </div>
       <div style={{ height: 1, background: "var(--color-light-decorative-00, #eee)", margin: "6px 0" }} />
       {creating ? (
         <NewHandleForm
@@ -110,6 +118,12 @@ export function HandlePickerMenu({
           disabled={busy}
           onClick={() => setCreating(true)}
         />
+      )}
+      {onLogout && (
+        <>
+          <div style={{ height: 1, background: "var(--color-light-decorative-00, #eee)", margin: "6px 0" }} />
+          <HandleRow icon={<span style={{ fontSize: 14 }}>⎋</span>} label="Log out" disabled={busy} onClick={onLogout} />
+        </>
       )}
     </div>
   );

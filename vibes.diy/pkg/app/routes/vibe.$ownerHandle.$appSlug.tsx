@@ -1759,6 +1759,9 @@ ${rootCssBlock}
                   handles={myHandles}
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
                   onNewHandle={(handle) => void handleNewHandle(handle)}
+                  // Log out from the handle picker's bottom row (matches the
+                  // SessionSidebar / Settings logout — plain Clerk sign-out).
+                  onLogout={authSignedIn ? () => void clerk.signOut() : undefined}
                   // Owner-only: making a new avatar writes to the active handle.
                   // Pass the promise through (no `void`) so ViewerTagView's
                   // `await onPickFile` holds its uploading state through the

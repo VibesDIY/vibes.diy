@@ -108,4 +108,23 @@ describe("HandlePickerMenu", () => {
     fireEvent.click(row);
     expect(onSelect).not.toHaveBeenCalled();
   });
+
+  it("shows a 'Log out' row only when onLogout is provided, and fires it", () => {
+    const onLogout = vi.fn();
+    const { rerender } = render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" />);
+    // No onLogout → no row.
+    expect(screen.queryByRole("menuitem", { name: /log out/i })).toBeNull();
+    rerender(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onLogout={onLogout} />);
+    fireEvent.click(screen.getByRole("menuitem", { name: /log out/i }));
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the 'Log out' row when busy", () => {
+    const onLogout = vi.fn();
+    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" busy onLogout={onLogout} />);
+    const row = screen.getByRole("menuitem", { name: /log out/i }) as HTMLButtonElement;
+    expect(row.disabled).toBe(true);
+    fireEvent.click(row);
+    expect(onLogout).not.toHaveBeenCalled();
+  });
 });
