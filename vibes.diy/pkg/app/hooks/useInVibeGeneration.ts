@@ -45,6 +45,13 @@ export interface InVibeGeneration {
   // can't tell two vibes apart. undefined until a turn produces a persisted block.end.
   readonly persistedFsRef: { readonly ownerHandle: string; readonly appSlug: string; readonly fsId: string } | undefined;
   readonly sendPrompt: (text: string) => void;
+  // Cancel the in-flight turn as if it never started (the /vibe edit-card Stop
+  // button). Settles the reducer back to a clean pre-turn state (drops the
+  // partial block, `isGenerating`→false, blur clears), reverts the iframe
+  // preview to the last good source, and closes+re-arms the codegen socket so
+  // the NEXT edit opens a fresh turn — no half-open session, no interleaving.
+  // A no-op when nothing is generating.
+  readonly stop: () => void;
   // Open the codegen chat lazily, on the owner's first edit intent. The host
   // calls this when the edit UI (the UnifiedVibeCard) opens, so passive
   // browsing of one's own vibe never establishes a codegen connection — the
@@ -157,7 +164,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // no-op keeps useChatSession's contract satisfied.
   const navigateToFsId = useCallback((_targetFsId?: string) => undefined, []);
 
-  const { chat } = useChatSession({
+  const { chat, resetChat } = useChatSession({
     ownerHandle,
     appSlug,
     fsId,
@@ -170,6 +177,13 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     sendPrompt: sendPromptState,
     navigateToFsId,
   });
+
+  // Latest prompt state + queued prompt held in refs so `stop` can read fresh
+  // values while staying referentially stable (it flows down through the card).
+  const promptStateRef = useRef(promptState);
+  promptStateRef.current = promptState;
+  const promptToSendRef = useRef(promptToSend);
+  promptToSendRef.current = promptToSend;
 
   // Hot-swap the iframe whenever a new code.end lands in the latest block.
   // Mirrors PreviewApp's push effect (PreviewApp.tsx:77-126).
@@ -273,6 +287,42 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     setHasLocalEdit(true);
     sendPromptState(text.trim());
   }, []);
+
+  // Cancel the in-flight turn as if it never started. Robust about not leaving a
+  // broken codegen session: (1) revert the iframe preview to the last good
+  // source so the running app looks pre-turn; (2) settle the reducer via
+  // `abortTurn` (drop the partial block, running→false, clear optimistic/
+  // in-flight/reconnect); (3) go back to the lazy/inactive state so the open
+  // effect doesn't eagerly re-open; (4) close + re-arm the socket so the NEXT
+  // edit opens a fresh turn whose replay rebuilds blocks from the persisted
+  // truth. Stable identity (reads state via refs) so it can pass through the card.
+  const stop = useCallback(() => {
+    const st = promptStateRef.current;
+    const inFlight =
+      st.running || st.optimisticPrompt !== undefined || st.inFlightStreamId !== undefined || promptToSendRef.current !== null;
+    if (!inFlight) return;
+    // Revert the preview: resolve the code WITHOUT the partial in-flight block
+    // (the last settled source) and push it back so the aborted edit's partial
+    // hot-swaps are undone. Best-effort — skipped when there's no prior code to
+    // restore (e.g. the very first build), and gated by the same push guard the
+    // hot-swap effect uses.
+    const priorBlocks = st.current ? st.blocks.filter((b) => b !== st.current) : st.blocks;
+    if (opts.srvVibeSandbox && priorBlocks.length > 0) {
+      const priorCode = getCode({ ...st, blocks: priorBlocks }).code.join("\n");
+      if (priorCode.length >= 200 && priorCode.includes("export default")) {
+        opts.srvVibeSandbox.pushSource(priorCode);
+      }
+    }
+    dispatch({ type: "abortTurn" });
+    sendPromptState(null);
+    // Fall back to the server-projected chips (as if no local edit happened);
+    // the persisted projection already reflects any prior settled edit.
+    setHasLocalEdit(false);
+    // Go lazy again so the open effect stays inert, then close + re-arm the
+    // socket. The next sendPrompt/activate re-opens a fresh chat.
+    setActive(false);
+    resetChat();
+  }, [opts.srvVibeSandbox, resetChat]);
 
   // A turn is in flight until block-end settles the reducer (running back to
   // false). This is the same predicate the in-flight guard + blur ramp use; it
@@ -432,6 +482,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     hasLocalEdit,
     persistedFsRef,
     sendPrompt,
+    stop,
     activate,
     saveCode,
     saveState,

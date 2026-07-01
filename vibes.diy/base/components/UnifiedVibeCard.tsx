@@ -36,6 +36,12 @@ export interface UnifiedVibeCardProps {
   chips?: readonly string[];
   onSelectChip?: (chip: string) => void;
   onSubmitOther?: (text: string) => void;
+  /** True while an in-place edit is generating. The composer's submit button
+   *  swaps to a Stop button (same shape/size/position) and the text input stays
+   *  visible + editable so the next change can be composed while this one runs. */
+  generating?: boolean;
+  /** Cancel the in-flight generation — wired to the composer's Stop button. */
+  onStop?: () => void;
   /** Per-chip cached-suggestion fast-path state (#2917), keyed by chip string.
    *  Drives the server-authoritative shield badge and the owner-only
    *  bless/unbless control. Omit to render plain chips. */
@@ -109,11 +115,13 @@ export interface UnifiedVibeCardProps {
    *  Share view is active. Header and bottom nav stay. */
   body?: React.ReactNode;
   /** The in-place codegen stream view. Unlike `body` (a full replace), this LAYERS
-   *  over the chips+Other region: the chips stay mounted (hidden, inert) to reserve
-   *  their height, and the stream is absolutely positioned on top. So the panel
-   *  shows the streaming chat without resizing as a turn runs, and the old
-   *  suggestion chips don't sit visible behind it. Ignored while `body` is set
-   *  (Share view wins). (vibe-tour-chips-edit) */
+   *  over the CHIPS region: the chips stay mounted (hidden, inert) to reserve their
+   *  height, and the stream is absolutely positioned on top. So the panel shows the
+   *  streaming chat without resizing as a turn runs, and the old suggestion chips
+   *  don't sit visible behind it. The composer input row is NOT covered — it stays
+   *  visible + editable below the stream so the next change can be queued (its submit
+   *  button becomes a Stop button; see `generating`/`onStop`). Ignored while `body`
+   *  is set (Share view wins). (vibe-tour-chips-edit) */
   streamBody?: React.ReactNode;
   /** Which bottom-nav affordance reads as selected. Defaults to "edit". The
    *  editor-tab values ("code"/"data"/"chat"/"settings") all light the Editor
@@ -334,45 +342,53 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 <PublishBanner onPublish={props.onPublish} publishing={props.publishing} />
               )}
               {props.body ?? (
-                // The chips+Other region. While a turn streams (`streamBody` set),
-                // it stays mounted but hidden+inert so it reserves its height, and
-                // the stream view layers on top — the panel shows the streaming
-                // chat without resizing and the old chips don't sit visible.
-                <div
-                  style={{
-                    position: "relative",
-                    // While streaming, reserve a readable minimum so a text-input-only
-                    // card (no chips) doesn't crush the overlaid narration into the
-                    // lone input row's height. Harmless when chips are present — they
-                    // already reserve more, so the panel still doesn't resize.
-                    ...(props.streamBody ? { minHeight: 128 } : null),
-                  }}
-                >
+                <>
+                  {/* The chips region. While a turn streams (`streamBody` set), it
+                      stays mounted but hidden+inert so it reserves its height, and
+                      the stream view layers on top — the panel shows the streaming
+                      chat without resizing and the old chips don't sit visible. */}
                   <div
-                    aria-hidden={props.streamBody ? true : undefined}
-                    inert={props.streamBody ? true : undefined}
-                    style={props.streamBody ? { visibility: "hidden" } : undefined}
+                    style={{
+                      position: "relative",
+                      // While streaming, reserve a readable minimum so a text-input-only
+                      // card (no chips) doesn't crush the overlaid narration into the
+                      // lone input row's height. Harmless when chips are present — they
+                      // already reserve more, so the panel still doesn't resize.
+                      ...(props.streamBody ? { minHeight: 128 } : null),
+                    }}
                   >
-                    {props.composerControls && <div style={{ marginBottom: 8 }}>{props.composerControls}</div>}
-                    {props.chips && props.chips.length > 0 && (
-                      <OptionButtons
-                        options={props.chips}
-                        isFirst
-                        firstMessage="Describe a change to edit this app live:"
-                        onSelect={(o) => {
-                          props.onSelectChip?.(o);
-                          // Return false so OptionButtons clears the press and the chips stay
-                          // clickable — the chip click hands off to in-place codegen, which the
-                          // host surfaces via streamBody; we don't want the button to lock.
-                          return false;
-                        }}
-                        decorate={(option) => decorateChip(option, props)}
-                      />
+                    <div
+                      aria-hidden={props.streamBody ? true : undefined}
+                      inert={props.streamBody ? true : undefined}
+                      style={props.streamBody ? { visibility: "hidden" } : undefined}
+                    >
+                      {props.composerControls && <div style={{ marginBottom: 8 }}>{props.composerControls}</div>}
+                      {props.chips && props.chips.length > 0 && (
+                        <OptionButtons
+                          options={props.chips}
+                          isFirst
+                          firstMessage="Describe a change to edit this app live:"
+                          onSelect={(o) => {
+                            props.onSelectChip?.(o);
+                            // Return false so OptionButtons clears the press and the chips stay
+                            // clickable — the chip click hands off to in-place codegen, which the
+                            // host surfaces via streamBody; we don't want the button to lock.
+                            return false;
+                          }}
+                          decorate={(option) => decorateChip(option, props)}
+                        />
+                      )}
+                    </div>
+                    {props.streamBody && (
+                      <div style={{ position: "absolute", inset: 0, overflowY: "auto" }}>{props.streamBody}</div>
                     )}
-                    <OtherRow onSubmitOther={props.onSubmitOther} />
                   </div>
-                  {props.streamBody && <div style={{ position: "absolute", inset: 0, overflowY: "auto" }}>{props.streamBody}</div>}
-                </div>
+                  {/* The composer input stays mounted, visible, and editable even
+                      while a turn streams — so you can type your next change while
+                      you wait. While generating, its submit button becomes a Stop
+                      button that cancels the in-flight edit (same shape/size/spot). */}
+                  <OtherRow onSubmitOther={props.onSubmitOther} generating={props.generating} onStop={props.onStop} />
+                </>
               )}
             </div>
             <div
@@ -844,12 +860,44 @@ function NavIcon({
   );
 }
 
-function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) => void }) {
+// Shared geometry for the composer's action button so the Stop button occupies
+// the EXACT same shape/size/location as the submit button — only the color and
+// glyph flip between states. Mirrors the homepage / chat composer's send button
+// (circular, white glyph), scaled to the one-line edit field.
+const OTHER_ROW_BUTTON_STYLE: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  flexShrink: 0,
+  borderRadius: "50%",
+  border: "none",
+  color: "#fff",
+  fontSize: 17,
+  fontWeight: "bold",
+  lineHeight: 1,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+function OtherRow({
+  onSubmitOther,
+  generating,
+  onStop,
+}: {
+  readonly onSubmitOther?: (text: string) => void;
+  readonly generating?: boolean;
+  readonly onStop?: () => void;
+}) {
   const [value, setValue] = React.useState("");
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        // While a change is generating the action button is Stop, not Submit —
+        // don't fire a prompt (queuing mid-turn isn't supported). The typed text
+        // stays in the field, ready to send the moment generation finishes.
+        if (generating) return;
         const text = value.trim();
         if (text) onSubmitOther?.(text);
         setValue("");
@@ -890,31 +938,29 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
           </span>
         )}
       </div>
-      {/* Round submit button mirroring the homepage / chat composer's send
-          button (circular, near-black, white up-arrow) — scaled down to fit
-          the one-line edit field. See NewSessionContent.styles getSubmitButtonStyle. */}
-      <button
-        type="submit"
-        aria-label="Submit change"
-        style={{
-          width: 30,
-          height: 30,
-          flexShrink: 0,
-          borderRadius: "50%",
-          border: "none",
-          background: "var(--vibes-blue, #3b82f6)",
-          color: "#fff",
-          fontSize: 17,
-          fontWeight: "bold",
-          lineHeight: 1,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <span aria-hidden="true">↑</span>
-      </button>
+      {generating ? (
+        // Stop button: same round footprint as submit, near-black with a white
+        // square. Cancels the in-flight edit. `type="button"` so it never submits.
+        <button
+          type="button"
+          aria-label="Stop generating"
+          onClick={onStop}
+          style={{ ...OTHER_ROW_BUTTON_STYLE, background: "var(--vibes-near-black, #1a1a1a)" }}
+        >
+          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 2, background: "#fff", display: "block" }} />
+        </button>
+      ) : (
+        // Round submit button mirroring the homepage / chat composer's send button
+        // (circular, near-black, white up-arrow) — scaled down to fit the one-line
+        // edit field. See NewSessionContent.styles getSubmitButtonStyle.
+        <button
+          type="submit"
+          aria-label="Submit change"
+          style={{ ...OTHER_ROW_BUTTON_STYLE, background: "var(--vibes-blue, #3b82f6)" }}
+        >
+          <span aria-hidden="true">↑</span>
+        </button>
+      )}
     </form>
   );
 }

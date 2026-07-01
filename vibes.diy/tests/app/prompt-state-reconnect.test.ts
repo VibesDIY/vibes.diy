@@ -47,6 +47,44 @@ function promptError(streamId: string, error = "boom") {
   return { type: "prompt.error" as const, streamId, chatId: "c1", seq: 9, timestamp: new Date(), error };
 }
 
+describe("promptReducer abortTurn", () => {
+  it("settles the in-flight turn back to a clean pre-turn state", () => {
+    const state = baseState({
+      running: true,
+      hasCode: true,
+      blocks: [{ msgs: [] }],
+      current: { msgs: [] },
+      connection: "reconnecting",
+      inFlightStreamId: "p-1",
+      optimisticPrompt: "make it blue",
+    });
+    const next = promptReducer(state, { type: "abortTurn" });
+    expect(next.running).toBe(false);
+    expect(next.blocks).toHaveLength(0);
+    expect(next.current).toBeUndefined();
+    expect(next.hasCode).toBe(false);
+    expect(next.connection).toBe("live");
+    expect(next.inFlightStreamId).toBeUndefined();
+    expect(next.optimisticPrompt).toBeUndefined();
+  });
+
+  it("preserves settings-derived fields (unlike clearChat)", () => {
+    const theme = { slug: "brutalist" } as unknown as PromptState["theme"];
+    const state = baseState({
+      running: true,
+      title: "Keep Me",
+      icon: { cid: "c", mime: "image/png" },
+      theme,
+      colorTheme: "sunset",
+    });
+    const next = promptReducer(state, { type: "abortTurn" });
+    expect(next.title).toBe("Keep Me");
+    expect(next.icon).toEqual({ cid: "c", mime: "image/png" });
+    expect(next.theme).toBe(theme);
+    expect(next.colorTheme).toBe("sunset");
+  });
+});
+
 describe("promptReducer reconnect actions", () => {
   it("streamDisconnected while running enters reconnecting", () => {
     const next = promptReducer(baseState({ running: true }), { type: "streamDisconnected" });
