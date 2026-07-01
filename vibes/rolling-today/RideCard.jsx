@@ -1,6 +1,6 @@
 import React from "react";
 import { Icon, ICONS } from "./Icon.jsx";
-import { pretty12, AUDIENCE_LABEL, AREA_LABEL } from "./calendar-utils.js";
+import { pretty12, rideKey, AUDIENCE_LABEL, AREA_LABEL } from "./calendar-utils.js";
 import { c } from "./styles.js";
 import NoteField from "./NoteField.jsx";
 
@@ -95,7 +95,7 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
 
       {canFavorite && (
         <div className="mb-3">
-          <NoteField saved={note} onSave={(t) => saveNote(String(event.id), t)} className={c.noteArea} />
+          <NoteField saved={note} onSave={(t) => saveNote(rideKey(event), t)} className={c.noteArea} />
         </div>
       )}
 
