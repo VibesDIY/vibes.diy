@@ -85,9 +85,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -254,9 +251,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../../vibes.diy/api/impl
@@ -314,9 +308,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -424,9 +415,6 @@ importers:
       '@clerk/react':
         specifier: ^6.11.1
         version: 6.11.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../../vibes.diy/api/impl
@@ -748,12 +736,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -818,9 +800,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/api-pkg':
         specifier: workspace:*
         version: link:../pkg
@@ -880,12 +859,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@noble/hashes':
         specifier: ^2.2.0
         version: 2.2.0
@@ -972,9 +945,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -1027,12 +997,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -1218,12 +1182,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-protocols-cloud':
-        specifier: ^0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: ^0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
@@ -1453,9 +1411,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -2066,12 +2021,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: ^0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-protocols-dashboard':
-        specifier: ^0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/api-types':
         specifier: workspace:*
         version: link:../../api/types
