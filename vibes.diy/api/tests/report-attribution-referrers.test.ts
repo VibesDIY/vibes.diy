@@ -219,4 +219,52 @@ describe("report-attribution-referrers", { timeout: TIMEOUT }, () => {
       expect(r.Ok().rows).toHaveLength(0);
     });
   });
+
+  describe("window filter", () => {
+    // The shared seed above is all timestamped 2025-01-01 — far outside any
+    // 7-day window relative to test-run time. Add one recent event so the
+    // window filter has something to keep.
+    const RECENT_HOST = "recent-referrer.example";
+    beforeAll(async () => {
+      const t = appCtx.vibesCtx.sql.tables;
+      const recentTs = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 1 day ago
+      await appCtx.vibesCtx.sql.db.insert(t.refererEvents).values([
+        {
+          logKey: "log-recent",
+          lineIdx: 0,
+          ts: recentTs,
+          refHref: `https://${RECENT_HOST}/promo`,
+          refHost: RECENT_HOST,
+          refPath: "/promo",
+          reqMethod: "GET",
+          reqPath: "/vibe/alice/app-recent",
+        },
+      ]);
+    });
+
+    it("window '7d' keeps only events from the last seven days", async () => {
+      const r = await apiAttrib.reportAttributionReferrers({ window: "7d" });
+      expect(r.isOk()).toBe(true);
+      const rows = r.Ok().rows;
+      // Only the recent event falls inside the window; the 2025-01-01 seed drops out.
+      expect(rows).toHaveLength(1);
+      expect(rows[0].refHost).toBe(RECENT_HOST);
+      expect(rows[0].reqPath).toBe("/vibe/alice/app-recent");
+    });
+
+    it("window 'all' (and the default) still includes the old events", async () => {
+      const explicit = await apiAttrib.reportAttributionReferrers({ window: "all" });
+      expect(explicit.isOk()).toBe(true);
+      const hosts = explicit.Ok().rows.map((row) => row.refHost);
+      // 5 original groups + the recent one.
+      expect(explicit.Ok().rows).toHaveLength(6);
+      expect(hosts).toContain(RECENT_HOST);
+      expect(hosts).toContain("example.com");
+
+      // Omitting window behaves identically to "all".
+      const def = await apiAttrib.reportAttributionReferrers({});
+      expect(def.isOk()).toBe(true);
+      expect(def.Ok().rows).toHaveLength(6);
+    });
+  });
 });

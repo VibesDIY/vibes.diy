@@ -109,6 +109,7 @@ export function App({ getClerkToken, report }: AppProps) {
   const [topVibes, setTopVibes] = useState<Loadable<ResReportTopVibesByMembers>>({ kind: "loading" });
   const [referrers, setReferrers] = useState<Loadable<ResReportAttributionReferrers>>({ kind: "loading" });
   const [referrerFilter, setReferrerFilter] = useState<string | undefined>(undefined);
+  const [referrerWindow, setReferrerWindow] = useState<"all" | "7d">("all");
 
   useEffect(() => {
     if (report === "campaign-health") return;
@@ -138,13 +139,16 @@ export function App({ getClerkToken, report }: AppProps) {
     const ac = new AbortController();
     setReferrers({ kind: "loading" });
     void (async () => {
-      const r = await api.reportAttributionReferrers(referrerFilter !== undefined ? { reqPath: referrerFilter } : {});
+      const r = await api.reportAttributionReferrers({
+        window: referrerWindow,
+        ...(referrerFilter !== undefined ? { reqPath: referrerFilter } : {}),
+      });
       if (ac.signal.aborted) return;
       if (r.isOk()) setReferrers({ kind: "ok", data: r.Ok() });
       else setReferrers({ kind: "err", msg: r.Err().message });
     })();
     return () => ac.abort();
-  }, [api, report, referrerFilter]);
+  }, [api, report, referrerFilter, referrerWindow]);
 
   return (
     <div className="page">
@@ -264,7 +268,10 @@ export function App({ getClerkToken, report }: AppProps) {
 
           <section>
             <div className="card">
-              <span className="section-label section-label--filled">All time</span>
+              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+                <WindowToggle label="All time" active={referrerWindow === "all"} onClick={() => setReferrerWindow("all")} />
+                <WindowToggle label="Last 7 days" active={referrerWindow === "7d"} onClick={() => setReferrerWindow("7d")} />
+              </div>
               <h2 className="section-title">Referrer attribution</h2>
               <p className="section-intro">
                 External pages ranked by traffic to vibes.diy. Click a landing-page path to drill down.
@@ -340,6 +347,31 @@ export function App({ getClerkToken, report }: AppProps) {
 function VibesDiyLogo() {
   return (
     <img src={vibesDiyLogoUrl} alt="Vibes DIY" style={{ height: "clamp(96px, 16vw, 180px)", width: "auto", display: "block" }} />
+  );
+}
+
+// Segmented toggle for the referrer attribution time window. Styled as a
+// section-label (matching the "Growth"/"Campaign Health" nav) so the active
+// window reads as the filled chip and the other as an outline chip.
+function WindowToggle({
+  label,
+  active,
+  onClick,
+}: {
+  readonly label: string;
+  readonly active: boolean;
+  readonly onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      className={active ? "section-label section-label--filled" : "section-label"}
+      style={{ marginBottom: 0, cursor: "pointer", fontFamily: "inherit", ...(active ? {} : { background: "transparent" }) }}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -622,7 +654,14 @@ function ReferrersTable({
                     {row.reqPath}
                   </button>
                 ) : (
-                  row.reqPath
+                  <a
+                    href={`https://vibes.diy${row.reqPath}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "var(--cyan)", textDecoration: "underline", textDecorationStyle: "dotted" }}
+                  >
+                    {row.reqPath}
+                  </a>
                 )}
               </td>
               <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{row.total.toLocaleString()}</td>
