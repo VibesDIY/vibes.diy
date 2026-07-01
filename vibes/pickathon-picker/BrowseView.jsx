@@ -101,7 +101,7 @@ export default function BrowseView({
                 <div className="flex gap-2">
                   {canFavorite && (
                     <button
-                      onClick={() => toggleFavorite(event)}
+                      onPointerDown={() => toggleFavorite(event)}
                       className={myFavIds.has(event.eventId) ? c.favToggleOn : c.favToggleOff}
                     >
                       {myFavIds.has(event.eventId) ? "♥" : "♡"}

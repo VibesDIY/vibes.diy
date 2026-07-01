@@ -142,7 +142,7 @@ export default function ScheduleView({
                           )}
                           {isEvent && onToggleFavorite && (
                             <button
-                              onClick={() => onToggleFavorite(item.data)}
+                              onPointerDown={() => onToggleFavorite(item.data)}
                               className={`p-1 rounded-lg m-2  text-xs font-bold px-2 ${myFavIds && myFavIds.has(item.data.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9]"}`}
                             >
                               {myFavIds && myFavIds.has(item.data.eventId) ? "♥" : "♡"}

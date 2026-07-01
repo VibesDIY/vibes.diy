@@ -76,7 +76,7 @@ export default function FavoritesView({
                     )}
                   </div>
                   {canWrite && (
-                    <button onClick={() => toggleFavorite(event)} className={c.favToggleOn}>
+                    <button onPointerDown={() => toggleFavorite(event)} className={c.favToggleOn}>
                       <span className="font-black text-lg">♥</span>
                     </button>
                   )}
