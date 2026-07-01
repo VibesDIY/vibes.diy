@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useViewer, useVibe } from "use-vibes";
 import { useVibeStore } from "./vibe-store.js";
 import {
@@ -24,6 +24,36 @@ import ShiftsView from "./ShiftsView.jsx";
 // Re-stamp a locally-stored doc onto the freshly signed-in handle when vibe-store
 // migrates localStorage → Fireproof on first login. Owned docs are keyed by user,
 // so favorites/notes re-key deterministically; shifts get a fresh _id.
+// A friend-connect link arrives as `?friend=<handle>` on the vibes.diy URL, which
+// the platform mirrors onto the app's own iframe URL. Read it, then strip it so a
+// visitor who copies their address bar doesn't re-share someone else's friend link.
+const readFriendParam = () => {
+  try {
+    const own = new URLSearchParams(window.location.search).get("friend");
+    if (own) return own;
+  } catch (e) {}
+  try {
+    if (window.top && window.top !== window) return new URLSearchParams(window.top.location.search).get("friend");
+  } catch (e) {}
+  return null;
+};
+const clearFriendParamFromUrl = () => {
+  const strip = (loc, hist) => {
+    try {
+      const u = new URL(loc.href);
+      if (u.searchParams.has("friend")) {
+        u.searchParams.delete("friend");
+        hist.replaceState(null, "", u.pathname + u.search + u.hash);
+      }
+    } catch (e) {}
+  };
+  strip(window.location, window.history);
+  // The parent vibes.diy URL is cross-origin, so this usually no-ops — best effort.
+  try {
+    if (window.top && window.top !== window) strip(window.top.location, window.top.history);
+  } catch (e) {}
+};
+
 const migratePickathonDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.eventId}` };
   if (doc.type === "note") return { ...doc, userId: handle, _id: `note-${handle}-${doc.eventId}` };
@@ -71,6 +101,8 @@ export default function PickathonPicker() {
   const [superMode, setSuperMode] = useState(false);
   const [viewingUser, setViewingUser] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
+  const [linkedFriend, setLinkedFriend] = useState(null);
+  const friendScrolledRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [nowTick, setNowTick] = useState(Date.now());
 
@@ -90,27 +122,41 @@ export default function PickathonPicker() {
     }
   }, []);
 
+  // Capture a `?friend=<handle>` link once, then strip it from the URL. Friend
+  // features need a login, so we hold the handle and act on it after sign-in.
   useEffect(() => {
-    if (!viewer?.userHandle) return;
-    let friendParam = null;
-    try {
-      const w = typeof window !== "undefined" && window.top && window.top !== window ? window.top : window;
-      friendParam = new URLSearchParams(w.location.search).get("friend");
-    } catch (e) {
-      friendParam = new URLSearchParams(window.location.search).get("friend");
+    const fp = readFriendParam();
+    if (!fp) return;
+    setLinkedFriend(fp);
+    clearFriendParamFromUrl();
+  }, []);
+
+  // Once signed in, record the friendship and jump to that friend's schedule.
+  useEffect(() => {
+    if (!signedIn || !linkedFriend || linkedFriend === viewer.userHandle) return;
+    database
+      .put({
+        _id: `friend-${viewer.userHandle}-${linkedFriend}`,
+        type: "friend",
+        userId: viewer.userHandle,
+        friendSlug: linkedFriend,
+        createdAt: Date.now(),
+      })
+      .catch(() => {});
+    setSelectedFriend(linkedFriend);
+    setView("friends");
+  }, [signedIn, linkedFriend, viewer?.userHandle, database]);
+
+  // Scroll to the friend's schedule once it's rendered (one-time).
+  useEffect(() => {
+    if (friendScrolledRef.current || !signedIn || !linkedFriend) return;
+    if (view !== "friends" || selectedFriend !== linkedFriend) return;
+    const el = document.getElementById("friend-schedule");
+    if (el) {
+      friendScrolledRef.current = true;
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
     }
-    if (friendParam && friendParam !== viewer.userHandle) {
-      database
-        .put({
-          _id: `friend-${viewer.userHandle}-${friendParam}`,
-          type: "friend",
-          userId: viewer.userHandle,
-          friendSlug: friendParam,
-          createdAt: Date.now(),
-        })
-        .catch(() => {});
-    }
-  }, [viewer?.userHandle, database]);
+  }, [signedIn, linkedFriend, view, selectedFriend, events.length]);
 
   useEffect(() => {
     if (!pendingDelete) return;
@@ -429,8 +475,6 @@ export default function PickathonPicker() {
     ].sort((a, b) => a.sort - b.sort || (a.type === "shift" ? -1 : 1));
   };
 
-  const friendCount = friends.length + friendedBy.length;
-
   const renderDeleteX = (docId) => (
     <button
       data-pending-delete
@@ -481,13 +525,6 @@ export default function PickathonPicker() {
           {error && error.includes("cached") && (
             <div className={`mt-2 ${c.pinkBg} text-white px-3 py-2 rounded-lg text-sm font-bold`}>{error}</div>
           )}
-          {!signedIn && (
-            <div className={c.readOnlyBanner}>
-              {returningLoggedOut
-                ? "Your saved schedule is on your account — sign in via the Vibes DIY logo to see it."
-                : "Sign in via the Vibes DIY logo to share your schedule with friends."}
-            </div>
-          )}
         </div>
 
         <div className={`${c.navBg} ${c.border} p-8`}>
@@ -505,9 +542,9 @@ export default function PickathonPicker() {
                   {viewName === "browse" && `Browse Events`}
                   {viewName === "bands" && `Bands`}
                   {viewName === "favorites" && `Favorites (${myFavIds.size})`}
-                  {viewName === "friends" && `🙋‍♀️ Friends (${friendCount})`}
+                  {viewName === "friends" && `🙋‍♀️ Friends`}
                   {viewName === "shifts" && `Extras (${shifts.length})`}
-                  {viewName === "schedule" && `My Schedule (${myFavIds.size})`}
+                  {viewName === "schedule" && `My Schedule`}
                 </button>
               ))}
             {superMode && (
@@ -681,6 +718,18 @@ export default function PickathonPicker() {
           )}
         </div>
       </div>
+
+      {!signedIn && (
+        <div className="fixed right-3 bottom-20 z-40 max-w-[80vw] pointer-events-none">
+          <div className={c.signInCallout}>
+            {linkedFriend
+              ? "Sign in via the Vibes DIY logo to add friends"
+              : returningLoggedOut
+                ? "Your saved schedule is on your account — sign in via the Vibes DIY logo to see it."
+                : "Sign in via the Vibes DIY logo to share your schedule with friends"}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
