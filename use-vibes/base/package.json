@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@clerk/react": "^6.11.1",
+    "@clerk/react": "^6.11.3",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/identity": "workspace:*",
