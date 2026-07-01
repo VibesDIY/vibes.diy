@@ -44,6 +44,12 @@ export interface CuratedEdge {
 // ── v1 content: Music / the Blooms (the four existing hand-tuned vibes) ──────
 // bloom-root ─"Add a pattern sequencer"→ bloom-machine ─"Make it a drum machine"→ bloom-drums
 //            └"Make it a memory game"──→ bloom-says   (a Game — categories are doors, not fences)
+//
+// ── v1.1 content: Games (from the landing-pages mind-games featured apps) ────
+// match-pairs ─"Make the pairs play tones"────→ tone-pairs  ·leaf (sonic evolution)
+//             └"Hunt the color word instead"──→ hue-hunt ─"Let me play unlimited rounds"→ hue-rush ·leaf
+// (match-pairs/hue-hunt adapted from jchris/memory-pairs + jchris/hue-hunt;
+//  tone-pairs/hue-rush are their hand-tuned evolutions. Sources: vibes/<slug>/.)
 
 export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   {
@@ -51,6 +57,12 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     label: "Music",
     blurb: "Play a grid of tones, then make it a sequencer, a drum machine, or a memory game.",
     entry: { ownerHandle: "system", appSlug: "bloom-root" },
+  },
+  {
+    category: "Games",
+    label: "Games",
+    blurb: "Flip and match pairs, then give them voices — or hunt color words as long as you like.",
+    entry: { ownerHandle: "system", appSlug: "match-pairs" },
   },
 ];
 
@@ -69,6 +81,21 @@ export const CURATED_EDGES: readonly CuratedEdge[] = [
     source: { ownerHandle: "system", appSlug: "bloom-machine" },
     chipLabel: "Make it a drum machine",
     target: { ownerHandle: "system", appSlug: "bloom-drums" },
+  },
+  {
+    source: { ownerHandle: "system", appSlug: "match-pairs" },
+    chipLabel: "Make the pairs play tones",
+    target: { ownerHandle: "system", appSlug: "tone-pairs" },
+  },
+  {
+    source: { ownerHandle: "system", appSlug: "match-pairs" },
+    chipLabel: "Hunt the color word instead",
+    target: { ownerHandle: "system", appSlug: "hue-hunt" },
+  },
+  {
+    source: { ownerHandle: "system", appSlug: "hue-hunt" },
+    chipLabel: "Let me play unlimited rounds",
+    target: { ownerHandle: "system", appSlug: "hue-rush" },
   },
 ];
 
