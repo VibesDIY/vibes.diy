@@ -33,6 +33,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 
 ### Ship & operate
 
+- [vibe-cli-pr-policy.md](agents/vibe-cli-pr-policy.md) — For Vibe (CLI) work, the `push`/`publish` deploy is the ship; the PR/merge is just a safety net to not lose code (don't stress about it or which PR it's on). Reviews are useful — don't rush them; apply feedback and auto-deploy. Full `pr-lifecycle` rules still apply to platform/library/infra changes
 - [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal, the autonomous merge loop (hold for Charlie → green → merge → continue → blog post) and its hold-for-human-deploy exception (schema/DO/bindings/risky, any size), closing fixed issues on merge (auto-close is unreliable here)
 - [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook; one-click ship via `workflow_dispatch` on `ship-fanout.yaml` (auto-versions from the tag streams; triggerable from the GitHub app or MCP `actions_run_trigger` — still requires an explicit human "ship it" in the same exchange)
 - [cli-then-prod.md](agents/cli-then-prod.md) — Stage risky ships on the CLI env, verify, then promote to prod (uses the deploy-tags conventions)

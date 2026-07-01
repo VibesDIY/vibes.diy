@@ -381,6 +381,9 @@ export default function PickathonPicker() {
     if (handledFriendRef.current.has(linkedFriend)) return;
     if (friends.some((f) => f.friendSlug === linkedFriend)) {
       handledFriendRef.current.add(linkedFriend);
+      // Clear any prompt we may have opened in an earlier run before `friends` hydrated
+      // (useLiveQuery starts empty), so an already-followed user never gets stuck with it.
+      setFriendConfirm(null);
       setSelectedFriend(linkedFriend);
       setView("friends");
       return;
