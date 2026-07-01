@@ -1,48 +1,48 @@
-# A backend write that the access function can't tell from a user write
+# The design was approved. Then the live isolate said "could not be cloned."
 
-Source: `claude/backend-js-b6-write-through-access` (B6 of #2856; the write/access core, follows B5's onChange)
+Source: `claude/backend-js-b6-write-through-access` (B6 of #2856; the write/access core) — stacked on the SSR loader plumbing (#2967, #2845)
 
-B6 makes a vibe's `backend.js` `ctx.db.put(doc)` / `ctx.db.delete(id)` **real**. The headline is "handlers
-can write data now." The actual work is making sure a server-side write is the *same write* a user makes —
-same access gate, same allow/deny, same grant sidecar — so there's no privileged backdoor that bypasses
-`access.js`. The access function literally cannot tell a backend write from a frontend one, because they
-run the identical gate.
+B6 makes a vibe's `backend.js` `ctx.db.put(doc)` / `ctx.db.delete(id)` **real**: a server-side write goes
+through the *same* access gate a user write does, as the trigger's identity, so `access.js` literally
+can't tell them apart. The access/data half — reuse the production `putDoc`/`deleteDoc` gate (QuickJS
+`access.js`, grant-state, `AccessFnOutputs` sidecar), through the same per-doc seq allocator, as the
+`onChange`→original-writer / `fetch`→session-user / `scheduled`→owner identity, with B5's loop-guard
+depth finally carrying real values — went the way a careful port goes. The *transport* half is the story.
 
-**The capability has to cross an isolate boundary without leaking.** `ctx.db.put` runs inside the
-untrusted Worker Loader isolate; the gate runs on the host with the database handle. Three ways to bridge
-it; only one survives. Route it through the isolate's general `fetch`? That couples the data path to B8's
-egress proxy and makes the write capability reachable from any handler code. Return a list of writes the
-host applies after the handler finishes? That breaks read-after-write *inside* a handler. The answer
-(Charlie-confirmed) is a **dedicated, identity-free `Fetcher` binding in the isolate `env`** —
-`env.__VIBES_DB`. The generated `ctx.db` is the *only* path to it; general `fetch` stays
-`globalOutbound: null` until B8. So the write capability is unforgeable from handler code: you can't reach
-it except through `ctx.db`.
+**The approved design was impossible, and only a live isolate could tell us.** The plan (Charlie-signed)
+was a dedicated `Fetcher` capability in the loaded isolate's `env` — `env.__VIBES_DB.fetch(...)`. It
+passed every unit test against the fake loader binding. Then we flipped `BACKEND_JS=loader` on the PR
+preview (the open-beta `env.LOADER` binding is absent from CI, so this was the *first* real isolate load)
+and read the errors, one deploy at a time:
 
-**`env` is part of the isolate identity, so what you put there matters.** The isolate is cached by a hash
-of its code. Bake per-trigger identity into `env` and either you fragment the cache (a new isolate per
-user) or you bleed identity (a cached isolate serving the wrong writer). So `env` holds only the *stable
-transport*; the identity and the loop-guard depth ride the host-side callback, never the binding. And the
-binding *schema* version is folded into the isolate hash (Charlie watch-out) — change the `ctx.db` contract
-and you force a fresh isolate, so a binding change can never be served stale.
+1. `could not be cloned` — the real Worker Loader **structured-clones `WorkerCode.env`**. A host callback
+   can't ride `env`; it carries cloneable *data* only. The entire approved channel was a dead end.
+2. Pivot to `globalOutbound` (the only other channel) → `not of type 'Fetcher'`. `globalOutbound` is
+   passed by reference, but it demands a *real* `Fetcher` — a plain `{ fetch }` object is rejected.
+3. The only real `Fetcher` that can reach a per-invocation, in-memory callback is a **stub back to the
+   `BackendDO` itself**: a same-name self-stub resolves to the same instance = same isolate, so the
+   executor's nonce→callback registry is shared, and a DO→isolate→DO subrequest *doesn't* deadlock (the
+   input gate is open across the `await`). `ctx.db` → `globalOutbound` (self-stub) → the DO's `fetch` →
+   `handleBackendDbOp` → registry → the production gate. It worked… almost:
+4. `Access function unavailable` — the `BackendDO`'s `vctx` never wired the QuickJS invoker the session DO
+   does. Add it.
+5. `no active call context` — the nonce vanished: the worker bundle had **duplicated** the executor
+   module, so the executor registered in one `Map` and the handler read another. Pin the registry to a
+   `globalThis` singleton.
+6. `{"ok":true,"wrote":"hit-live-test"}` — and the doc is queryable. A backend handler wrote through the
+   access gate, on a real edge isolate.
 
-**Put and delete are different gates — don't conflate them.** This bit Codex at the spec stage. `putDoc`
-runs the access function (QuickJS), reduces grant state, fail-closes, and **upserts** the `AccessFnOutputs`
-sidecar. `deleteDoc` does *none* of that — it runs ACL/DM checks and **removes** the stored output row
-(that removal *is* the revocation). A backend write reuses whichever path matches the op, so allow/deny +
-sidecar behavior is identical per-op. Both go through the exact same per-doc seq allocator the frontend
-uses, so a handler write and a concurrent user write to the same doc still serialize on one writer — no
-new ordering layer, Charlie's hard requirement.
+**The lesson isn't any one bug — it's that the load-bearing unknown ("how does `ctx.db` reach the host?")
+was unanswerable without a live open-beta binding, and every layer of the answer was invisible to CI.**
+The design doc's "open question 1" is now closed with an empirically-forced architecture, not a guess.
+`env` is capability-free; `globalOutbound` is a DO self-stub that services *only* the db-op URL and 403s
+all other egress (so there's still no open-Internet egress until B8); identity + loop-guard depth are
+applied host-side and never travel through the isolate.
 
-**The loop guard finally has fuel.** B5 built a generation-depth guard and proved it dormant (handlers
-couldn't write). B6 threads the *trusted* depth end-to-end: the onChange envelope's `depth` — carried since
-B5 but dropped before the handler ran — now flows DO → onChange attempt → `ctx.db` callback →
-`emitBackendOnChange`. A handler write at generation N emits its own onChange at N+1, suppressed past 4. The
-depth never comes from handler input; it rides the same trusted internal channel as identity. The guard
-B5 unit-tested against a *simulated* chain now bounds a real one.
-
-**What's deliberately not here.** The session-user identity for the `fetch` trigger is *wired* but its
-resolver returns null pending a confirmed `_api` verified-session scheme — so `fetch` handler writes are
-anonymous (fail-safe: the access fn must opt them in) until a one-function follow-up. Live WS fan-out for
-backend writes is deferred too — allow/deny + grant parity is exact; viewers are eventually consistent via
-sync + the onChange lane. And the whole slice is dark behind `BACKEND_JS=off`: it's the risky write/access
-path, so it merges dormant and the actual deploy is held for a human.
+Two more notes worth keeping. The gate reconciliation: a rebase onto current `main` collided with an
+interim `#2290` refactor (DM dbs governed by a built-in access fn), so `runPutAccessGate` /
+`runDeleteAccessGate` had to *absorb* main's helpers rather than pick a side — the 123-test
+`access-fn`/`dm` suite is the proof it stayed behavior-preserving. And the honest edge: `fetch`-triggered
+writes are still anonymous until the `_api` verified-session resolver lands (#3001) — fail-safe, since
+`access.js` must opt them in. All of it stays dark in prod behind `BACKEND_JS=off`; the preview is where
+it's real.

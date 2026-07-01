@@ -123,18 +123,13 @@ export class BackendDO implements DurableObject {
     if (outcome.reason === "ok") {
       return outcome.response as unknown as CFResponse;
     }
-    // Every fallback reason → 404 (attemptVibeSsr discipline). DIAGNOSTIC (preview):
-    // the reason + whether the DO sees the LOADER binding + the invoke/select error
-    // ride the JSON body (header values can't hold newlines — that threw 1101). To
-    // be reverted to the opaque "not found" body before finalizing.
-    const diag = {
-      error: "backend.js _api: not found",
-      reason: outcome.reason,
-      loaderType: typeof (this.env as { LOADER?: unknown }).LOADER,
-      mode: String(this.env.BACKEND_JS ?? "(unset)"),
-      detail: String((outcome as { detail?: unknown }).detail ?? ""),
-    };
-    return new Response(JSON.stringify(diag), { status: 404, headers: { "content-type": "application/json" } });
+    // Every fallback reason → an opaque 404 (attemptVibeSsr discipline): a disabled
+    // or absent backend, a select miss, or an executor error are indistinguishable to
+    // the caller, so nothing about the vibe's backend leaks through the response.
+    return new Response("backend.js _api: not found", {
+      status: 404,
+      headers: { "content-type": "text/plain" },
+    }) as unknown as CFResponse;
   }
 
   /**

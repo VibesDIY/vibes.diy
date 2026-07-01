@@ -31,22 +31,45 @@ introduce a second enforcement path.
 ## The central decision — how `ctx.db` reaches the production gate
 
 `ctx.db.put` runs **inside the Worker Loader isolate**; the gate runs **on the host** (the DO / api-svc).
-The isolate must call **out** to the host. Three structural choices:
+The isolate must call **out** to the host. Three structural choices were considered:
 
-1. **Dedicated host binding passed into the isolate `env`** (proposed). The host hands the loaded isolate
-   a `Fetcher`-shaped capability (e.g. `env.__VIBES_DB`); the generated `ctx.db.put` does
-   `env.__VIBES_DB.fetch("https://db.internal/put", { body: { doc } })`. The host side routes that to a
-   new internal `putDoc`/`deleteDoc` entry **as the trigger identity + trusted depth**. Keeps db ops
-   **separate from general egress** (so B6 does not depend on B8's `globalOutbound` proxy), and the
-   capability is unforgeable from handler code (it's a host binding, not a URL the handler can reach via
-   normal `fetch`, which stays `globalOutbound: null` until B8).
-2. **Via `globalOutbound`** — route the isolate's `fetch` through a host Fetcher that special-cases db
-   URLs. Rejected: couples B6 to B8's egress knob and mixes db callbacks with user egress.
-3. **Return-value DSL** — the handler returns a list of writes the host applies after the handler
-   finishes. Rejected: breaks read-after-write within a handler and diverges from the `ctx.db` API shape.
+1. **Dedicated host binding in the isolate `env`** (originally proposed + Charlie-approved). The host
+   hands the loaded isolate a `Fetcher`-shaped capability (e.g. `env.__VIBES_DB`) and `ctx.db.put` calls
+   it. **Rejected after live testing — impossible as specified.** The real Worker Loader
+   **structured-clones `WorkerCode.env`**, so a host callback object can't ride it (verified on a live
+   preview isolate: it fails _"could not be cloned"_). `env` can carry cloneable **data** only, never a
+   capability.
+2. **Via `globalOutbound`** — the isolate's outbound `fetch` routes through a host Fetcher that services
+   a db-op URL and refuses all other egress. Originally rejected (couples to B8's egress knob); **this
+   is the mechanism the runtime actually forces.** `globalOutbound` is the ONLY by-reference `Fetcher`
+   channel `WorkerCode` exposes (`env?: any` is cloned; `globalOutbound?: Fetcher | null` is not). But it
+   requires a **real `Fetcher`** — a plain host object is rejected _"not of type 'Fetcher'"_ — so the
+   Fetcher is a **stub back to the per-vibe `BackendDO` itself**.
+3. **Return-value DSL** — the handler returns a list of writes the host applies afterward. Rejected:
+   breaks read-after-write within a handler and diverges from the `ctx.db` API shape.
 
-**Proposed: option 1.** Confirm the Worker Loader supports passing a service-binding/Fetcher into a
-dynamically-loaded isolate's `env` (open question 1).
+**Chosen (validated end-to-end on a live preview isolate): option 2, via a DO self-stub.** The
+executor sets the isolate's `globalOutbound` to a stub the `BackendDO` obtains for _its own_ name
+(`env.BACKEND_DO.get(idFromName(backendDoName(owner, slug)))`). `ctx.db.put` POSTs `{ nonce, op }` to the
+internal db-op URL → `globalOutbound` (self-stub) → the DO's `fetch` recognizes the URL and calls
+`handleBackendDbOp` → it resolves the **per-invocation nonce** against a `globalThis`-singleton registry
+(shared even if the bundler duplicates the executor module) → runs the registered callback (the
+production put/delete gate, as the trigger identity + trusted depth). Key properties, all confirmed live:
+
+- **Same isolate ⇒ shared registry.** A same-name self-stub resolves to the same DO instance, so the
+  db-op executes in the isolate that registered the nonce. The registry is pinned to `globalThis` to
+  survive worker-bundle module duplication.
+- **No self-call deadlock.** The db-op subrequest interleaves with the awaited `invoke` (the DO input
+  gate is open across the isolate `await`).
+- **Unforgeable identity, closed egress.** The op carries only doc/db + an opaque nonce; identity + depth
+  are applied host-side. `globalOutbound` services _only_ the db-op URL and 403s everything else, so a
+  handler still has no open-Internet egress until B8. `env` stays capability-free.
+- **QuickJS in the DO.** The put gate calls `vctx.invokeAccessFn`, so `BackendDO.buildVctx` wires the
+  local QuickJS invoker + source cache (as the session DO does) — else the gate fails closed.
+
+The `WorkerCode.env` structured-clone constraint and the `globalOutbound`-needs-a-real-`Fetcher`
+constraint are only observable against the live open-beta binding (absent from CI), so they were found
+by deploying to the PR preview with `BACKEND_JS=loader` and reading the isolate errors.
 
 ## The server entry — reuse the two paths, don't fork them
 
