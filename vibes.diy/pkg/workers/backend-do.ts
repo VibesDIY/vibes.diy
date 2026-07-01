@@ -7,7 +7,8 @@ import {
 } from "@cloudflare/workers-types";
 import { CFEnv } from "@vibes.diy/api-types";
 import { CfCacheIf } from "@vibes.diy/api-svc";
-import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { CFInjectMutable, cfServeAppCtx, localInvokeAccessFn } from "@vibes.diy/api-svc/cf-serve.js";
+import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
 import { type VibesApiSQLCtx } from "@vibes.diy/api-svc/types.js";
 import { attemptBackendFetch } from "@vibes.diy/api-svc/intern/attempt-backend-fetch.js";
 import { resolveBackendSchedule } from "@vibes.diy/api-svc/intern/load-selected-backend.js";
@@ -64,6 +65,14 @@ export class BackendDO implements DurableObject {
   // In-memory single-flight guard for the `scheduled` lane. CF runs one `alarm()`
   // at a time per DO; this guards the await-interleaved edge / a manual re-entry.
   private ticking = false;
+  // Per-DO QuickJS module + access.js source caches for the local access-fn invoker
+  // (#2856 B6). A backend `ctx.db` write re-enters the same production put gate,
+  // which calls `vctx.invokeAccessFn` (QuickJS) — so the BackendDO must supply it,
+  // exactly as the session DO does, or the gate fails closed "Access function
+  // unavailable". Kept on the instance so cost amortizes across writes (mirrors
+  // `AppSessions`).
+  private quickjsModule: { module: QuickJSWASMModule | null } = { module: null };
+  private accessFnSourceCache: Map<string, string> = new Map<string, string>();
 
   constructor(state: DurableObjectState, env: CFEnv) {
     this.state = state;
@@ -285,11 +294,18 @@ export class BackendDO implements DurableObject {
     return ns.get(ns.idFromName(backendDoName(ownerHandle, appSlug)));
   }
 
-  /** Build `VibesApiSQLCtx` from `env` (the session-DO pattern). */
+  /** Build `VibesApiSQLCtx` from `env` (the session-DO pattern). Wires the local
+   *  QuickJS access-fn invoker + source cache so a backend `ctx.db` write re-enters
+   *  the same access-gated put path the frontend uses (#2856 B6). */
   private async buildVctx(request: CFRequest): Promise<VibesApiSQLCtx> {
     const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
     (cctx as CFInjectMutable).cache = (caches as unknown as { default: unknown }).default as unknown as CfCacheIf;
-    const appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
+    const quickjsRef = this.quickjsModule;
+    const overrides = {
+      invokeAccessFn: (params: Parameters<typeof localInvokeAccessFn>[1]) => localInvokeAccessFn(quickjsRef, params),
+      accessFnSourceCache: this.accessFnSourceCache,
+    };
+    const appCtx = (await cfServeAppCtx(request, this.env, cctx, overrides)).appCtx;
     return appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
   }
 
