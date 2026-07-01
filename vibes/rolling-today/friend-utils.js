@@ -5,11 +5,14 @@ export const byTypeUser = (doc) => [doc.type, doc.userId];
 export const byTypeFriendSlug = (doc) => [doc.type, doc.friendSlug];
 
 // Re-stamp a locally-stored doc onto the freshly signed-in handle when useFireproof's
-// anonymousLocal store migrates local → cloud on first login.
+// anonymousLocal store migrates local → cloud on first login. Only favorites and notes
+// are user-owned cloud docs; DROP everything else (return falsy) — e.g. legacy `geocode`
+// docs from the old map, which access.js rejects as "unknown document type" and which
+// would otherwise fail the migration on every load.
 export const migrateRollingDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.rideId}` };
   if (doc.type === "note") return { ...doc, userId: handle, _id: `note-${handle}-${doc.rideId}` };
-  return { ...doc, userId: handle };
+  return null;
 };
 
 // A friend-connect link arrives as `?friend=<handle>` on the vibes.diy URL, which the
