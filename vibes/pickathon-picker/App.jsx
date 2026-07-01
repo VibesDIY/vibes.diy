@@ -544,7 +544,7 @@ export default function PickathonPicker() {
                   {viewName === "favorites" && `Favorites (${myFavIds.size})`}
                   {viewName === "friends" && `🙋‍♀️ Friends`}
                   {viewName === "shifts" && `Extras`}
-                  {viewName === "schedule" && `My Faves`}
+                  {viewName === "schedule" && `My Faves${myFavIds.size > 0 ? ` (${myFavIds.size})` : ""}`}
                 </button>
               ))}
             {superMode && (
