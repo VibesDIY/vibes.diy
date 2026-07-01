@@ -132,7 +132,14 @@ export function VibeEditorPanel({
             </div>
           </div>
         )}
-        {tab === "data" && <DataView promptState={promptState} fsId={fsId} />}
+        {tab === "data" && (
+          // Mirror the Code tab's full-height flex wrapper so the Data view
+          // fills the available height (its own root is `h-full`) — otherwise it
+          // renders shorter than Code, leaving less room to see the rows.
+          <div className="flex h-full min-h-0 flex-col">
+            <DataView promptState={promptState} fsId={fsId} />
+          </div>
+        )}
         {tab === "chat" &&
           (promptState.blocks.length > 0 ? (
             <ChatInterface promptState={promptState} onClick={() => undefined} />

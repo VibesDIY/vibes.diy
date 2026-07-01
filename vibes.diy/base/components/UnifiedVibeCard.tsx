@@ -317,10 +317,14 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                       handles={props.handles ?? []}
                       activeSlug={props.handleSlug}
                       busy={props.handlePickerBusy}
-                      // Opens ABOVE the header tag — there's usually more room over
-                      // the card than under it, so a long (now-scrollable) roster
-                      // has somewhere to go (vibe-handles-menu-scroll).
-                      placement="up"
+                      // Opens DOWNWARD into the card body. The tag anchors at the
+                      // TOP of the card header and the card clips overflow
+                      // (`overflow: hidden` on the dialog), so opening "up" would
+                      // render the menu above the card's top edge and clip it
+                      // (Codex P1 on #2990). The card body extending below the tag
+                      // is where the room actually is; the now-scrollable list
+                      // (maxHeight 40vh) keeps a long roster reachable there.
+                      placement="down"
                       onSelect={(slug) => {
                         props.onSelectHandle?.(slug);
                         setPickerOpen(false);
@@ -823,7 +827,9 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         setValue("");
       }}
       style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
-      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-2.5"
+      // pr-3 (was pr-2.5) nudges the round submit button ~2px left so it isn't
+      // crowded against the field's right edge.
+      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-3"
     >
       <input
         value={value}
