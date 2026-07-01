@@ -475,7 +475,12 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
           ref={menuRef}
           data-vibe-handle-menu
           className="text-light-primary dark:text-dark-primary"
-          style={{ position: "fixed", top: 16, right: 6, zIndex: 4 }}
+          // `pointerEvents: "auto"` is REQUIRED: the host mounts this card under a
+          // full-viewport `pointer-events-none` wrapper, and every interactive
+          // layer (backdrop, dialog, toggle) re-enables hit-testing explicitly. As
+          // a detached sibling this layer must too, or its rows aren't clickable in
+          // production (Codex P1 on #2996).
+          style={{ position: "fixed", top: 16, right: 6, zIndex: 4, pointerEvents: "auto" }}
         >
           <HandlePickerMenu
             handles={props.handles ?? []}

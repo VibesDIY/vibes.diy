@@ -245,6 +245,10 @@ describe("UnifiedVibeCard", () => {
     expect(layer).not.toBeNull();
     expect(layer?.closest("[data-unified-vibe-card]")).toBeNull();
     expect(getComputedStyle(layer as HTMLElement).position).toBe("fixed");
+    // Must re-enable hit-testing: the host wraps the card in a
+    // `pointer-events-none` layer, so a detached sibling that doesn't set
+    // pointerEvents:auto would be unclickable in production (Codex P1 #2996).
+    expect(getComputedStyle(layer as HTMLElement).pointerEvents).toBe("auto");
     expect(screen.getByRole("menuitem", { name: /log out/i })).toBeTruthy();
   });
 
