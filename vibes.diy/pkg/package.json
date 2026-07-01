@@ -30,7 +30,7 @@
     "@cf-wasm/quickjs": "^0.2.5",
     "@clerk/react": "^6.11.1",
     "@cloudflare/puppeteer": "^1.1.0",
-    "@cloudflare/workers-types": "4.20260617.1",
+    "@cloudflare/workers-types": "4.20260701.1",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.3.0",
     "@react-router/node": "^7.18.0",
