@@ -16,7 +16,9 @@ pnpm --dir vibes.diy/api/svc run db:inspect info
 # List base tables
 pnpm --dir vibes.diy/api/svc run db:inspect tables
 
-# Dump the newest N rows of a table
+# Dump N rows of a table. NOTE: it does `order by 1 desc` — sorted by the FIRST
+# column, not by time. For AppDocuments that's "userSlug", so these are NOT the
+# newest rows. Use `sql` with an explicit `order by created desc` for recency.
 pnpm --dir vibes.diy/api/svc run db:inspect table AppDocuments --limit 20
 
 # Arbitrary read-only query (note the escaped double-quotes around identifiers)
@@ -29,11 +31,17 @@ pnpm --dir vibes.diy/api/svc run db:inspect sql "select \"userId\", updated from
 Sibling: `pnpm growth-report` (root) → `db:inspect-report` renders the prebuilt
 growth report instead of a raw query.
 
-## It is read-only, and it is PROD
+## It is meant for reads, and it is PROD — so still be careful
 
-- The `sql` subcommand is gated by `assertReadonlySql`: only statements starting with
-  `select` / `with` / `show` / `explain` run. Anything else is rejected — you cannot
-  mutate through this tool, so it's safe to point at prod.
+- The `sql` subcommand runs `assertReadonlySql`, but that is only a **prefix
+  allowlist**: it accepts a statement whose first word is `select` / `with` / `show` /
+  `explain` and rejects everything else. It is NOT a real read-only guarantee — Postgres
+  runs writable CTEs (`with d as (delete from … returning …) select …`) and executes the
+  target of `explain analyze <dml>`, both of which start with an allowed keyword and
+  therefore slip through. So the guard stops a bare `delete`/`update`, but do not treat
+  it as mutation-proof: this hits **production**, so read your query before you run it.
+  (Hardening the guard to an actual read-only transaction is tracked in
+  [#2982](https://github.com/VibesDIY/vibes.diy/issues/2982).)
 - It reads `NEON_DATABASE_URL` from `process.env` or `vibes.diy/api/svc/.dev.vars`
   (via `loadDevVars`) and connects to the **production** Neon Postgres. There is no
   local/dev mode here. **Never use it to verify local test state** — it won't see your

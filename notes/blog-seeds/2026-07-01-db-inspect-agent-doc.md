@@ -17,7 +17,10 @@ Quick-Reference pointers.
 
 Worth a post because it's a clean example of the cloud-session network model biting an
 obvious tool, and of the fix being "document the sanctioned path" rather than new code.
-Gotchas captured in the doc: the `sql` subcommand is guarded to read-only
-(SELECT/WITH/SHOW/EXPLAIN only), it always hits **prod** (never local SQLite — a known
-trap), and identifiers are case-sensitive camelCase where the Drizzle field name often
-differs from the SQL column (`ownerHandle` → `"userSlug"`).
+Gotchas captured in the doc: the `sql` subcommand's "read-only" check is only a prefix
+allowlist (SELECT/WITH/SHOW/EXPLAIN) — writable CTEs and `explain analyze <dml>` slip
+through, so it's not mutation-proof against prod (hardening tracked in #2982); it always
+hits **prod** (never local SQLite — a known trap); and identifiers are case-sensitive
+camelCase where the Drizzle field name often differs from the SQL column (`ownerHandle` →
+`"userSlug"`). Codex's review of the PR caught both the "cannot mutate" overclaim and a
+"newest rows" claim that was really "ordered by the first column."
