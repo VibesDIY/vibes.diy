@@ -36,7 +36,12 @@ function renderSidebar() {
  */
 function withStore(initial: ResRecentVibesItem[]) {
   let items = initial;
-  mockListRecentVibes.mockImplementation(async () => ok({ items, nextCursor: undefined }));
+  // Model the server: when includeUnpublished:false (the sidebar's call), drop
+  // tombstoned rows before returning — exclusion is server-side now (#2980).
+  mockListRecentVibes.mockImplementation(async ({ includeUnpublished }: { includeUnpublished?: boolean }) => {
+    const visible = includeUnpublished === false ? items.filter((i) => !i.unpublishedAt) : items;
+    return ok({ items: visible, nextCursor: undefined });
+  });
   mockSetUnpublish.mockImplementation(async ({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) => {
     const unpublishedAt = "2026-02-02T00:00:00.000Z";
     items = items.map((i) => (i.appSlug === appSlug ? { ...i, unpublishedAt } : i));
@@ -100,16 +105,15 @@ describe("RecentVibes delete", () => {
     expect(mockSetUnpublish).toHaveBeenCalledTimes(1);
   });
 
-  it("hides already-unpublished vibes from the sidebar list", async () => {
-    mockListRecentVibes.mockResolvedValue(
-      ok({
-        items: [makeItem("alpha"), makeItem("gone", { unpublishedAt: "2026-01-05T00:00:00.000Z" })],
-        nextCursor: undefined,
-      })
-    );
+  it("requests server-side exclusion of tombstoned vibes and never shows them", async () => {
+    // The store honors includeUnpublished:false, so "gone" is filtered by the
+    // (mock) server rather than the client — mirrors the sidebar's real call.
+    withStore([makeItem("alpha"), makeItem("gone", { unpublishedAt: "2026-01-05T00:00:00.000Z" })]);
 
     renderSidebar();
     await waitFor(() => expect(screen.getByText("alpha")).toBeTruthy());
+
     expect(screen.queryByText("gone")).toBeNull();
+    expect(mockListRecentVibes).toHaveBeenCalledWith(expect.objectContaining({ includeUnpublished: false }));
   });
 });

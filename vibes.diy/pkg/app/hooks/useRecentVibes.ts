@@ -39,10 +39,22 @@ export function notifyRecentVibesChanged(change?: RecentVibesChange): void {
   for (const fn of recentVibesListeners) fn(change);
 }
 
-export function useRecentVibes(limit: number): UseRecentVibes {
+export interface UseRecentVibesOptions {
+  // When false, ask the server to omit soft-unpublished (tombstoned) rows so a
+  // page-1-only view (the sidebar) isn't truncated by client-side filtering
+  // (#2980). Defaults to true — restore surfaces like /vibes/mine keep them.
+  includeUnpublished?: boolean;
+}
+
+export function useRecentVibes(limit: number, opts: UseRecentVibesOptions = {}): UseRecentVibes {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const { sharedApi } = useVibesDiy();
+
+  const includeUnpublished = opts.includeUnpublished ?? true;
+  // Only add the field to the request when opting out, so default callers stay
+  // byte-identical (existing wire shape + tests unchanged).
+  const reqExtra = includeUnpublished ? {} : { includeUnpublished: false };
 
   const [items, setItems] = useState<ResRecentVibesItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
@@ -61,7 +73,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    const res = await sharedApi.listRecentVibes({ limit });
+    const res = await sharedApi.listRecentVibes({ limit, ...reqExtra });
     if (token !== fetchTokenRef.current) return;
     if (res.isOk()) {
       const ok = res.Ok();
@@ -71,7 +83,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
       setError(res.Err().message);
     }
     setLoading(false);
-  }, [sharedApi, limit]);
+  }, [sharedApi, limit, includeUnpublished]);
 
   const loadMore = useCallback(async () => {
     if (!isSignedInRef.current || !nextCursor) return;
@@ -80,7 +92,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const token = ++fetchTokenRef.current;
     setLoading(true);
     setError(null);
-    const res = await sharedApi.listRecentVibes({ limit, cursor: nextCursor });
+    const res = await sharedApi.listRecentVibes({ limit, cursor: nextCursor, ...reqExtra });
     if (token !== fetchTokenRef.current) return;
     if (res.isOk()) {
       const ok = res.Ok();
@@ -90,7 +102,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
       setError(res.Err().message);
     }
     setLoading(false);
-  }, [sharedApi, limit, nextCursor]);
+  }, [sharedApi, limit, nextCursor, includeUnpublished]);
 
   const ensureAllLoaded = useCallback(async () => {
     if (loadAllPromiseRef.current) return loadAllPromiseRef.current;
@@ -109,7 +121,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     const promise = (async () => {
       let cursor: string | undefined = nextCursor;
       while (cursor) {
-        const res = await sharedApi.listRecentVibes({ limit, cursor });
+        const res = await sharedApi.listRecentVibes({ limit, cursor, ...reqExtra });
         if (token !== fetchTokenRef.current) return;
         if (res.isErr()) {
           setError(res.Err().message);
@@ -129,7 +141,7 @@ export function useRecentVibes(limit: number): UseRecentVibes {
 
     loadAllPromiseRef.current = promise;
     return promise;
-  }, [sharedApi, limit, nextCursor]);
+  }, [sharedApi, limit, nextCursor, includeUnpublished]);
 
   useEffect(() => {
     if (!isLoaded) {

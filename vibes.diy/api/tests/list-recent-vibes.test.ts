@@ -352,4 +352,29 @@ describe("listRecentVibes", { timeout: (inject("DB_FLAVOUR" as never) as string)
     const r = await api.pinRecentVibe({ ownerHandle: app.ownerHandle, appSlug: "missing-pin-target", pin: true });
     expect(r.isErr()).toBe(true);
   });
+
+  it("excludes tombstoned vibes when includeUnpublished:false, but keeps them by default", async () => {
+    const app = await createApp(api, "tombstone-exclude");
+    const rUnpub = await api.setUnpublish({ ownerHandle: app.ownerHandle, appSlug: app.appSlug, unpublish: true });
+    if (rUnpub.isErr()) assert.fail(rUnpub.Err().message);
+
+    const has = (items: { appSlug: string }[]) => items.some((it) => it.appSlug === app.appSlug);
+
+    // Default (legacy) behavior still surfaces the tombstone for restore.
+    const rDefault = await api.listRecentVibes({ limit: 100 });
+    if (rDefault.isErr()) assert.fail(rDefault.Err().message);
+    expect(has(rDefault.Ok().items)).toBe(true);
+
+    // Opting out drops it server-side.
+    const rExcluded = await api.listRecentVibes({ limit: 100, includeUnpublished: false });
+    if (rExcluded.isErr()) assert.fail(rExcluded.Err().message);
+    expect(has(rExcluded.Ok().items)).toBe(false);
+
+    // Republishing brings it back under the exclusion filter too.
+    const rRepub = await api.setUnpublish({ ownerHandle: app.ownerHandle, appSlug: app.appSlug, unpublish: false });
+    if (rRepub.isErr()) assert.fail(rRepub.Err().message);
+    const rAfter = await api.listRecentVibes({ limit: 100, includeUnpublished: false });
+    if (rAfter.isErr()) assert.fail(rAfter.Err().message);
+    expect(has(rAfter.Ok().items)).toBe(true);
+  });
 });
