@@ -28,7 +28,15 @@ import {
   getGalleryContentStyle,
   getGalleryDescriptionStyle,
   getTitle,
+  getStepsContainerStyle,
+  getStepStyle,
+  getStepNumberStyle,
+  getStepLabelStyle,
 } from "./NewSessionContent/NewSessionContent.styles.js";
+
+// How-it-works steps — numbered circles (cream number on the logo's black
+// circle) rendered beneath the hero brand line.
+const HOW_IT_WORKS_STEPS = ["Describe your app", "See it build before your eyes", "Invite your friends"] as const;
 
 export default function HomePage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -235,6 +243,18 @@ export default function HomePage() {
 
             {/* Brand line beneath the prompt input — matches the hero typography */}
             <div style={getTitle(mobile, isDarkMode)}>Your life is custom. Your software should be too.</div>
+
+            {/* How it works — three numbered steps (cream number on the logo's black circle) */}
+            <div style={getStepsContainerStyle(mobile)}>
+              {HOW_IT_WORKS_STEPS.map((label, i) => (
+                <div key={label} style={getStepStyle()}>
+                  <div style={getStepNumberStyle(mobile)} aria-hidden>
+                    {i + 1}
+                  </div>
+                  <div style={getStepLabelStyle(mobile, isDarkMode)}>{label}</div>
+                </div>
+              ))}
+            </div>
 
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>

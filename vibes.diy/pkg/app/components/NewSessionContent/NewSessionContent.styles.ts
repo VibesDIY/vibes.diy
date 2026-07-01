@@ -77,6 +77,58 @@ export const getTitle = (isMobile: boolean, isDarkMode: boolean): CSSProperties 
   boxSizing: "border-box",
 });
 
+// "How it works" three-step row — responsive.
+// Desktop: three steps side by side. Mobile: stacked vertically.
+export const getStepsContainerStyle = (isMobile: boolean): CSSProperties => ({
+  display: "flex",
+  flexDirection: isMobile ? "column" : "row",
+  gap: isMobile ? "16px" : "24px",
+  width: "100%",
+  maxWidth: "600px",
+  boxSizing: "border-box",
+  padding: isMobile ? "0 8px" : "0",
+  alignItems: isMobile ? "flex-start" : "flex-start",
+  justifyContent: "center",
+});
+
+// A single step: numbered circle beside its label.
+export const getStepStyle = (): CSSProperties => ({
+  flex: 1,
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: "12px",
+});
+
+// The numbered circle — cream number on the logo's black circle.
+export const getStepNumberStyle = (isMobile: boolean): CSSProperties => {
+  const size = isMobile ? "32px" : "36px";
+  return {
+    flexShrink: 0,
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    backgroundColor: "var(--vibes-black)",
+    color: "var(--vibes-cream)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
+    fontSize: isMobile ? "18px" : "20px",
+    fontWeight: 700,
+    lineHeight: 1,
+  };
+};
+
+// The step label text next to the circle.
+export const getStepLabelStyle = (isMobile: boolean, isDarkMode: boolean): CSSProperties => ({
+  fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
+  fontSize: isMobile ? "16px" : "18px",
+  fontWeight: 500,
+  color: isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)",
+  textAlign: "left",
+});
+
 // Button style - fixed width calculated dynamically
 export const getButtonStyle = (): CSSProperties => ({
   flexShrink: 0,
