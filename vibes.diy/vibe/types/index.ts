@@ -639,6 +639,21 @@ export function isEvtVibeColorOverride(x: unknown): x is EvtVibeColorOverride {
   return !(EvtVibeColorOverride(x) instanceof type.errors);
 }
 
+// Event: parent asks the running app to scroll back to the top. Posted when
+// the host detects the iOS "tap the status bar" gesture — WebKit only ever
+// delivers that scroll to the MAIN frame, never to a cross-origin subframe,
+// so the parent catches it via a 1px scroll sentinel and forwards the intent
+// here. The runtime scrolls the document plus any page-sized nested scroller.
+export const EvtVibeScrollToTop = type({
+  type: "'vibe.evt.scroll-to-top'",
+});
+
+export type EvtVibeScrollToTop = typeof EvtVibeScrollToTop.infer;
+
+export function isEvtVibeScrollToTop(x: unknown): x is EvtVibeScrollToTop {
+  return !(EvtVibeScrollToTop(x) instanceof type.errors);
+}
+
 // Sandbox → host navigation request. A vibe posts this to ask the parent
 // app to open a DM conversation with a specific user. The parent navigates
 // to /messages/<myUserSlug>/<recipientUserSlug>. Fire-and-forget; no response.

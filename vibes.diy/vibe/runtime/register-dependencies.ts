@@ -6,6 +6,7 @@ import {
   ReqImgGen,
   ResImgGen,
   EvtVibeHotSwapError,
+  isEvtVibeScrollToTop,
   isEvtVibeSetSource,
   isEvtRuntimeAck,
   isResPutDoc,
@@ -435,6 +436,10 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   // Register the hot-swap listener BEFORE signalling ready, so any set-source
   // the host posts in response to runtime.ready arrives at a live listener.
   registerHotSwapHandler();
+  // Scroll-to-top requests from the host (iOS status-bar tap relay). The
+  // native gesture never reaches a cross-origin subframe, so the parent
+  // forwards it as a message and we scroll the app's real scroller here.
+  registerScrollToTopHandler();
   // Send runtime.ready and retry until the host acks. The host's message
   // listener is attached inside its React provider, which can mount AFTER
   // the iframe boots when assets are 304-cached on a regular reload. Without
@@ -542,6 +547,40 @@ function registerHotSwapHandler(): void {
   if (hotSwapRegistered) return;
   hotSwapRegistered = true;
   window.addEventListener("message", handleHotSwapMessage);
+}
+
+let scrollToTopRegistered = false;
+
+function registerScrollToTopHandler(): void {
+  if (scrollToTopRegistered) return;
+  scrollToTopRegistered = true;
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (!isEvtVibeScrollToTop(event.data)) return;
+    scrollVibeToTop();
+  });
+}
+
+// Scroll whatever the app actually scrolls back to the top. The document
+// scroller covers body-scrolling apps; the element walk covers apps that
+// scroll a nested overflow container instead (common with h-screen layouts).
+// Only page-sized containers (≥60% of the viewport) are reset so a small
+// scrolled widget — an inner list, a code block — keeps its position.
+function scrollVibeToTop(): void {
+  try {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch {
+    window.scrollTo(0, 0);
+  }
+  const minHeight = window.innerHeight * 0.6;
+  for (const el of Array.from(document.querySelectorAll<HTMLElement>("*"))) {
+    if (el.scrollTop > 0 && el.clientHeight >= minHeight) {
+      try {
+        el.scrollTo({ top: 0, behavior: "smooth" });
+      } catch {
+        el.scrollTop = 0;
+      }
+    }
+  }
 }
 
 async function handleHotSwapMessage(event: MessageEvent): Promise<void> {
