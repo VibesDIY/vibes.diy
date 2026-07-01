@@ -48,6 +48,17 @@ queue = "vibes-service-dev"
 max_batch_size = 10
 max_batch_timeout = 1
 
+# Cross-script stub to the main worker's per-vibe BackendDO (#2856). The
+# consumer's onChange/arm handlers poke it (`__backend_onchange` /
+# `__backend_arm`); QueueCtx silently acks when the binding is absent (the B5
+# dark-mode contract), which is why backend.js's queue lanes no-op without
+# this. Deploy order in vibes.diy/actions/deploy already puts the main worker
+# first, so the class exists when this binding resolves (no 10061 trap).
+[env.dev.durable_objects]
+bindings = [
+  { name = "BACKEND_DO", class_name = "BackendDO", script_name = "vibes-diy-v2-dev" },
+]
+
 [env.prod]
 name = "vibes-diy-v2-queue-consumer-prod"
 
@@ -71,3 +82,12 @@ bucket_name = "vibes-diy-fs-ids"
 queue = "vibes-service-prod"
 max_batch_size = 10
 max_batch_timeout = 5
+
+# Cross-script stub to the main worker's per-vibe BackendDO (#2856) — see the
+# env.dev note. Found live: with BACKEND_JS=loader on in prod, the fetch lane
+# worked but onChange/scheduled stayed dead because the consumer acked pokes
+# it had no binding to deliver.
+[env.prod.durable_objects]
+bindings = [
+  { name = "BACKEND_DO", class_name = "BackendDO", script_name = "vibes-diy-v2-prod" },
+]
