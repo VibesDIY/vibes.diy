@@ -73,6 +73,32 @@ function encodeKey(v: unknown): string {
   }
 }
 
+// Client-generated document ids for optimistic writes. A fixed-width hex
+// timestamp keeps lexical order == chronological (matching the server's
+// time-ordered ids, so `allDocs` sorted by `_id` stays in creation order),
+// and a random suffix avoids cross-client collisions when the id is minted
+// on the client instead of the server. Only used on the optimistic path for
+// a brand-new doc (no `_id`); with optimism off the server still mints ids.
+let optimisticIdCounter = 0;
+function randomHex(bytes: number): string {
+  const g = (globalThis as { crypto?: Crypto }).crypto;
+  if (g?.getRandomValues) {
+    const arr = new Uint8Array(bytes);
+    g.getRandomValues(arr);
+    return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  let s = "";
+  for (let i = 0; i < bytes; i++)
+    s += Math.floor(Math.random() * 256)
+      .toString(16)
+      .padStart(2, "0");
+  return s;
+}
+function newOptimisticId(): string {
+  const t = Date.now().toString(16).padStart(12, "0");
+  return `${t}-${randomHex(6)}-${(optimisticIdCounter++).toString(16)}`;
+}
+
 // Types matching the use-fireproof Database interface.
 // Exported for use by consumers (img-vibes, db-explorer, etc.)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +108,17 @@ export interface DocResponse {
   id: string;
   ok: boolean;
 }
-export type ListenerFn<T extends DocTypes = DocTypes> = (changes: DocWithId<T>[]) => void;
+export interface ChangeMeta {
+  /** True when the change is a local optimistic write not yet confirmed by the server. */
+  readonly optimistic?: boolean;
+}
+export type ListenerFn<T extends DocTypes = DocTypes> = (changes: DocWithId<T>[], meta?: ChangeMeta) => void;
+
+/**
+ * A pending optimistic write, layered over the server's materialized view until
+ * the write round-trips. `put` carries the optimistic doc; `del` is a tombstone.
+ */
+type OverlayEntry<T extends DocTypes = DocTypes> = { kind: "put"; doc: DocWithId<T> } | { kind: "del" };
 
 export interface IndexRow<T extends DocTypes = DocTypes> {
   key: string;
@@ -94,6 +130,24 @@ export interface QueryResponse<T extends DocTypes = DocTypes> {
   rows: IndexRow<T>[];
   docs: DocWithId<T>[];
 }
+
+export interface QueryOpts {
+  includeDocs?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  key?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  keys?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  range?: [any, any];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prefix?: any;
+  descending?: boolean;
+  limit?: number;
+}
+
+export type MapFnArg<T extends DocTypes = DocTypes> =
+  | string
+  | ((doc: DocWithId<T>, emit?: (key: unknown, value?: unknown) => void) => unknown);
 
 // Minimal logger matching what useDocument accesses
 const fireflyLogger = {
@@ -135,6 +189,16 @@ export class FireflyDatabase {
   private readonly vibeApp: VibeApp;
   private readonly listeners = new Set<ListenerFn>();
   private readonly updateListeners = new Set<ListenerFn>();
+
+  // Optimistic-write layer (#2985). While a put/del is in flight, its effect is
+  // reflected here so live queries update instantly instead of waiting for the
+  // write to round-trip and echo back. Entries are keyed by `_id` and cleared
+  // when the server confirms (authoritative doc takes over) or the write fails
+  // (rolled back). Off at the raw-DB level to keep standalone/script notify
+  // semantics unchanged; useFireproof turns it on by default (opt out with
+  // useFireproof(db, { optimistic: false })).
+  private optimisticEnabled = false;
+  private readonly overlay = new Map<string, OverlayEntry>();
 
   constructor(name: string, vibeApi: FireflyTransport, acl?: DbAcl) {
     this.name = name;
@@ -202,6 +266,15 @@ export class FireflyDatabase {
     });
   }
 
+  /**
+   * Toggle the optimistic-write layer for this database (#2985). Called by
+   * useFireproof from the { optimistic } option; on by default.
+   */
+  setOptimistic(enabled: boolean): void {
+    this.optimisticEnabled = enabled;
+    if (!enabled) this.overlay.clear();
+  }
+
   async ready(): Promise<void> {
     return;
   }
@@ -219,6 +292,13 @@ export class FireflyDatabase {
   }
 
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
+    // Serve a pending optimistic write from the overlay so useDocument.refresh()
+    // (and any direct get) reflects it before the server confirms (#2985).
+    const pending = this.overlay.get(id);
+    if (pending) {
+      if (pending.kind === "del") throw new Error(`Failed to get document: ${id} (optimistically deleted)`);
+      return pending.doc as DocWithId<T>;
+    }
     const rRes = await this.vibeApi.getDoc(id, this.name);
     if (rRes.isErr()) {
       throw new Error(`Failed to get document: ${errMsg(rRes.Err())}`);
@@ -235,38 +315,83 @@ export class FireflyDatabase {
   }
 
   async put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse> {
-    // Stage B Phase 8: walk _files, replace File/Blob entries with the
-    // {uploadId, type, size, lastModified} shape via put-asset round-trips
-    // BEFORE serializing the doc across postMessage. Without this, File
-    // becomes {} on JSON.stringify and the put silently drops the file
-    // (or, in the cement WS encoder, times out — the user-visible
-    // "Request idle for 10000ms" failure mode the og/files-regression
-    // demo gate exhibits today).
-    const docToPut = await uploadFiles(doc, this.vibeApi as unknown as AssetUploader);
-    const rRes = await this.vibeApi.putDoc(docToPut as Record<string, unknown>, doc._id, this.name);
-    if (rRes.isErr()) {
-      throw new Error(`Failed to put document: ${errMsg(rRes.Err())}`);
+    // Optimistic layer (#2985): reflect the write in live queries immediately,
+    // before it round-trips. Mint the id client-side (server honors a provided
+    // docId) so the optimistic entry and the confirmed doc share one id — no
+    // key churn when the authoritative doc takes over.
+    const optimistic = this.optimisticEnabled;
+    const id = doc._id ?? (optimistic ? newOptimisticId() : undefined);
+    if (optimistic && id !== undefined) {
+      // decorateFiles is a no-op when there are no _files; a doc with raw
+      // File/Blob entries still renders from the caller's own state until the
+      // confirmed doc (with server-minted meta.url) replaces it.
+      const optimisticDoc = decorateFiles({ ...doc, _id: id }) as DocWithId;
+      this.overlay.set(id, { kind: "put", doc: optimisticDoc });
+      this.notifyListeners([optimisticDoc], { optimistic: true });
     }
-    const res = rRes.Ok();
-    if (isResPutDoc(res)) {
+    try {
+      // Stage B Phase 8: walk _files, replace File/Blob entries with the
+      // {uploadId, type, size, lastModified} shape via put-asset round-trips
+      // BEFORE serializing the doc across postMessage. Without this, File
+      // becomes {} on JSON.stringify and the put silently drops the file
+      // (or, in the cement WS encoder, times out — the user-visible
+      // "Request idle for 10000ms" failure mode the og/files-regression
+      // demo gate exhibits today).
+      const docToPut = await uploadFiles(doc, this.vibeApi as unknown as AssetUploader);
+      const rRes = await this.vibeApi.putDoc(docToPut as Record<string, unknown>, id, this.name);
+      if (rRes.isErr()) {
+        throw new Error(`Failed to put document: ${errMsg(rRes.Err())}`);
+      }
+      const res = rRes.Ok();
+      if (!isResPutDoc(res)) {
+        throw new Error(`Failed to put document: ${JSON.stringify(res)}`);
+      }
+      // Confirmed: drop the optimistic entry and let the authoritative doc take
+      // over. notifyListeners triggers the live query's server refresh, which
+      // now returns the persisted doc — no flicker when they match.
+      if (id !== undefined) this.overlay.delete(id);
       const savedDoc = { ...docToPut, _id: res.id } as DocWithId<T>;
       this.notifyListeners([savedDoc]);
       return { id: res.id, ok: true };
+    } catch (err) {
+      this.rollback(id);
+      throw err;
     }
-    throw new Error(`Failed to put document: ${JSON.stringify(res)}`);
   }
 
   async del(id: string): Promise<DocResponse> {
-    const rRes = await this.vibeApi.deleteDoc(id, this.name);
-    if (rRes.isErr()) {
-      throw new Error(`Failed to delete document: ${errMsg(rRes.Err())}`);
+    const optimistic = this.optimisticEnabled;
+    if (optimistic) {
+      this.overlay.set(id, { kind: "del" });
+      this.notifyListeners([{ _id: id, _deleted: true } as DocWithId], { optimistic: true });
     }
-    const res = rRes.Ok();
-    if (isResDeleteDoc(res)) {
+    try {
+      const rRes = await this.vibeApi.deleteDoc(id, this.name);
+      if (rRes.isErr()) {
+        throw new Error(`Failed to delete document: ${errMsg(rRes.Err())}`);
+      }
+      const res = rRes.Ok();
+      if (!isResDeleteDoc(res)) {
+        throw new Error(`Failed to delete document: ${JSON.stringify(res)}`);
+      }
+      if (optimistic) this.overlay.delete(id);
       this.notifyListeners([{ _id: res.id, _deleted: true } as DocWithId]);
       return { id: res.id, ok: true };
+    } catch (err) {
+      this.rollback(id);
+      throw err;
     }
-    throw new Error(`Failed to delete document: ${JSON.stringify(res)}`);
+  }
+
+  /**
+   * Undo a pending optimistic entry after its write failed (access denied,
+   * conflict, network) and notify so live queries revert — the UI never
+   * silently lies. No-op if the entry was already cleared/confirmed (#2985).
+   */
+  private rollback(id: string | undefined): void {
+    if (id === undefined || !this.overlay.has(id)) return;
+    this.overlay.delete(id);
+    this.notifyListeners([{ _id: id } as DocWithId], { optimistic: true });
   }
 
   async remove(id: string): Promise<DocResponse> {
@@ -282,52 +407,84 @@ export class FireflyDatabase {
     return { ids };
   }
 
-  async query<T extends DocTypes>(
-    mapFn: string | ((doc: DocWithId<T>, emit?: (key: unknown, value?: unknown) => void) => unknown),
-    opts: {
-      includeDocs?: boolean;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      key?: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      keys?: any[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      range?: [any, any];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      prefix?: any;
-      descending?: boolean;
-      limit?: number;
-    } = {}
-  ): Promise<QueryResponse<T>> {
+  async query<T extends DocTypes>(mapFn: MapFnArg<T>, opts: QueryOpts = {}): Promise<QueryResponse<T>> {
+    const serverDocs = await this.fetchServerDocs<T>(this.queryHint(mapFn, opts));
+    return this.materialize(this.applyOverlay(serverDocs), mapFn, opts);
+  }
+
+  /**
+   * Like query() but also returns the raw (pre-overlay) server docs it fetched,
+   * so useLiveQuery can cache them and re-materialize instantly against the
+   * optimistic overlay on a local write — no extra round-trip (#2985).
+   */
+  async queryLive<T extends DocTypes>(
+    mapFn: MapFnArg<T>,
+    opts: QueryOpts = {}
+  ): Promise<{ result: QueryResponse<T>; serverDocs: DocWithId<T>[] }> {
+    const serverDocs = await this.fetchServerDocs<T>(this.queryHint(mapFn, opts));
+    return { result: this.materialize(this.applyOverlay(serverDocs), mapFn, opts), serverDocs };
+  }
+
+  /**
+   * Synchronous re-materialization from already-fetched server docs plus the
+   * current overlay — the instant optimistic path used by useLiveQuery, no
+   * network (#2985).
+   */
+  materializeLive<T extends DocTypes>(serverDocs: DocWithId<T>[], mapFn: MapFnArg<T>, opts: QueryOpts = {}): QueryResponse<T> {
+    return this.materialize(this.applyOverlay(serverDocs), mapFn, opts);
+  }
+
+  /** Build the server-side query filter hint from a string mapFn + primitive opts. */
+  private queryHint<T extends DocTypes>(mapFn: MapFnArg<T>, opts: QueryOpts): QueryFilter | undefined {
     const isPrimitive = (v: unknown): v is string | number | boolean | null =>
       v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean";
-    let hint: QueryFilter | undefined;
-    if (typeof mapFn === "string") {
-      const keyHint = opts.key !== undefined && isPrimitive(opts.key) ? { key: opts.key } : {};
-      const keysHint =
-        opts.keys !== undefined && opts.keys.every(isPrimitive) ? { keys: opts.keys as (string | number | boolean | null)[] } : {};
-      const rangeHint =
-        opts.range !== undefined && isPrimitive(opts.range[0]) && isPrimitive(opts.range[1])
-          ? { range: opts.range as [unknown, unknown] }
-          : {};
-      if (keyHint.key !== undefined || keysHint.keys !== undefined || rangeHint.range !== undefined) {
-        hint = { field: mapFn, ...keyHint, ...keysHint, ...rangeHint };
-      }
+    if (typeof mapFn !== "string") return undefined;
+    const keyHint = opts.key !== undefined && isPrimitive(opts.key) ? { key: opts.key } : {};
+    const keysHint =
+      opts.keys !== undefined && opts.keys.every(isPrimitive) ? { keys: opts.keys as (string | number | boolean | null)[] } : {};
+    const rangeHint =
+      opts.range !== undefined && isPrimitive(opts.range[0]) && isPrimitive(opts.range[1])
+        ? { range: opts.range as [unknown, unknown] }
+        : {};
+    if (keyHint.key !== undefined || keysHint.keys !== undefined || rangeHint.range !== undefined) {
+      return { field: mapFn, ...keyHint, ...keysHint, ...rangeHint };
     }
+    return undefined;
+  }
 
+  /** Fetch this db's docs from the server (honoring an optional filter hint) and decorate _files. */
+  private async fetchServerDocs<T extends DocTypes>(hint: QueryFilter | undefined): Promise<DocWithId<T>[]> {
     const rRes = await this.vibeApi.queryDocs(this.name, hint);
     if (rRes.isErr()) {
       throw new Error(`Failed to query documents: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (!isResQueryDocs(res)) {
-      return { rows: [], docs: [] };
+      return [];
     }
-
     // Stage B Phase 8: decorate every doc's _files entries with a
     // meta.file() shim. URL is server-minted, so this only adds the
     // shim — pass-through when _files is absent.
-    const allDocs = res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
+    return res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
+  }
 
+  /**
+   * Merge the pending optimistic overlay onto a raw server doc list (#2985):
+   * puts replace/insert, dels remove. Returns the input untouched when the
+   * overlay is empty (the common, no-write-in-flight case).
+   */
+  private applyOverlay<T extends DocTypes>(serverDocs: DocWithId<T>[]): DocWithId<T>[] {
+    if (this.overlay.size === 0) return serverDocs;
+    const byId = new Map<string, DocWithId<T>>(serverDocs.map((d) => [d._id, d]));
+    for (const [id, entry] of this.overlay) {
+      if (entry.kind === "del") byId.delete(id);
+      else byId.set(id, entry.doc as DocWithId<T>);
+    }
+    return [...byId.values()];
+  }
+
+  /** Run mapFn over the given docs and apply key/range/sort/limit filters. Pure. */
+  private materialize<T extends DocTypes>(allDocs: DocWithId<T>[], mapFn: MapFnArg<T>, opts: QueryOpts): QueryResponse<T> {
     // Build index entries — keys stored as charwise-encoded strings for correct sort
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let encodedRows: { encodedKey: string; decodedKey: any; value: DocWithId<T>; doc?: DocWithId<T> }[];
@@ -446,7 +603,8 @@ export class FireflyDatabase {
     }
 
     // Stage B Phase 8: same _files decoration as in query().
-    let docs = res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
+    // applyOverlay reflects pending optimistic writes here too (#2985).
+    let docs = this.applyOverlay(res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>));
 
     // Sort by _id
     docs.sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
@@ -487,21 +645,20 @@ export class FireflyDatabase {
     };
   }
 
-  // Notify subscribers after mutations
-  private notifyListeners(docs: DocWithId[]): void {
-    for (const fn of this.listeners) {
+  // Notify subscribers after mutations. `meta.optimistic` marks a local
+  // optimistic write so useLiveQuery can re-materialize instantly (#2985).
+  // Only pass meta when present so non-optimistic notifications keep their
+  // original single-argument call shape.
+  private notifyListeners(docs: DocWithId[], meta?: ChangeMeta): void {
+    const call = (fn: ListenerFn) => {
       try {
-        fn(docs);
+        if (meta === undefined) fn(docs);
+        else fn(docs, meta);
       } catch {
         // Don't let a failing listener break others
       }
-    }
-    for (const fn of this.updateListeners) {
-      try {
-        fn(docs);
-      } catch {
-        // Don't let a failing listener break others
-      }
-    }
+    };
+    for (const fn of this.listeners) call(fn);
+    for (const fn of this.updateListeners) call(fn);
   }
 }

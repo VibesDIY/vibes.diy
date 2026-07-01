@@ -96,8 +96,18 @@ export function fireproof(name: string): FireflyDatabase {
  * Drop-in replacement for useFireproof that uses FireflyDatabase.
  * Apps call: const { database, useLiveQuery, useDocument } = useFireproof("mydb")
  */
-export function useFireproof(name = "useFireproof", config: { acl?: DbAcl; access?: AccessFunction; [key: string]: unknown } = {}) {
-  const database = useMemo(() => getOrCreateDb(name, config.acl), [name]);
+export function useFireproof(
+  name = "useFireproof",
+  config: { acl?: DbAcl; access?: AccessFunction; optimistic?: boolean; [key: string]: unknown } = {}
+) {
+  // Optimistic writes are on by default (#2985); apps opt out per-db with
+  // useFireproof(name, { optimistic: false }).
+  const optimistic = config.optimistic ?? true;
+  const database = useMemo(() => {
+    const db = getOrCreateDb(name, config.acl);
+    db.setOptimistic(optimistic);
+    return db;
+  }, [name, optimistic]);
   const useDocument = useMemo(() => createUseDocument(database), [database]);
   const useLiveQuery = useMemo(() => createUseLiveQuery(database), [database]);
   const useAllDocs = useMemo(() => createUseAllDocs(database), [database]);
@@ -251,13 +261,28 @@ function createUseLiveQuery(database: FireflyDatabase) {
     });
     const queryString = useMemo(() => JSON.stringify(query), [query]);
     const mapFnString = useMemo(() => mapFn.toString(), [mapFn]);
+    // Cache the last raw (pre-overlay) server docs so an optimistic write can
+    // re-materialize instantly against the overlay — no round-trip (#2985).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serverDocsRef = useRef<any[]>([]);
+    const queryOpts = useMemo(() => ({ ...query, includeDocs: true }), [queryString]);
     const refreshRows = useCallback(async () => {
-      const res = await database.query(mapFn, { ...query, includeDocs: true });
+      const { result: res, serverDocs } = await database.queryLive(mapFn, queryOpts);
+      serverDocsRef.current = serverDocs;
       setResult(res);
     }, [database, mapFnString, queryString]);
     useEffect(() => {
       refreshRows();
-      const unsubscribe = database.subscribe(refreshRows);
+      // On an optimistic local write, re-materialize synchronously from the
+      // cached server docs + overlay for instant UI, then still kick the async
+      // refresh to reconcile with the server. Remote/confirmed changes just
+      // refresh (they carry no overlay entry to apply locally).
+      const unsubscribe = database.subscribe((_changes, meta) => {
+        if (meta?.optimistic) {
+          setResult(database.materializeLive(serverDocsRef.current, mapFn, queryOpts));
+        }
+        void refreshRows();
+      });
       return () => {
         unsubscribe();
       };

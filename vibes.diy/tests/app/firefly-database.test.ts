@@ -556,3 +556,185 @@ describe("FireflyDatabase _files (Stage B Phase 8)", () => {
     expect(typeof back._files?.photo?.file).toBe("function");
   });
 });
+
+// ── Optimistic writes (#2985) ────────────────────────────────────────
+// The optimistic layer is off at the raw-DB level and turned on via
+// setOptimistic(true) (useFireproof does this by default). A pending put/del
+// is reflected in query()/allDocs()/get() before the server confirms, cleared
+// on success (authoritative doc takes over), and rolled back on failure.
+
+// A transport wrapper whose putDoc/deleteDoc block on a gate the test releases,
+// so we can observe the in-flight (pre-confirm) window.
+function gatedApi(mock: MockVibeApi) {
+  let release!: () => void;
+  let fail!: (err: unknown) => void;
+  const gate = new Promise<void>((resolve, reject) => {
+    release = resolve;
+    fail = reject;
+  });
+  const rawPut = mock.putDoc.bind(mock);
+  const rawDel = mock.deleteDoc.bind(mock);
+  const wrapped = {
+    ...mock,
+    putDoc: async (doc: Record<string, unknown>, docId?: string) => {
+      await gate;
+      return rawPut(doc, docId);
+    },
+    deleteDoc: async (id: string) => {
+      await gate;
+      return rawDel(id);
+    },
+  } as MockVibeApi;
+  return { api: wrapped, release, fail };
+}
+
+describe("FireflyDatabase optimistic writes (#2985)", () => {
+  it("default is off; setOptimistic(true) enables it, setOptimistic(false) disables", async () => {
+    const mock = createMockVibeApi("opt-app");
+    const { api, release } = gatedApi(mock);
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const putP = gdb.put({ _id: "x", n: 1 });
+    // Pending — server hasn't confirmed, but the overlay already reflects it.
+    const pending = await gdb.query("n");
+    expect(pending.docs.find((d) => d._id === "x")).toMatchObject({ n: 1 });
+    release();
+    await putP;
+  });
+
+  it("put reflects in query() before the server confirms, then reconciles", async () => {
+    const mock = createMockVibeApi("opt-app");
+    const { api, release } = gatedApi(mock);
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const optimisticNotifies: boolean[] = [];
+    gdb.subscribe((_docs, meta) => optimisticNotifies.push(!!meta?.optimistic));
+
+    const putP = gdb.put({ _id: "fav:1", favorited: true });
+    // Instant: overlay shows the doc while the network is still pending.
+    const during = await gdb.query("favorited", { key: true });
+    expect(during.docs.map((d) => d._id)).toContain("fav:1");
+    // Fired an optimistic notification synchronously.
+    expect(optimisticNotifies[0]).toBe(true);
+    // Server store hasn't been written yet (gate closed).
+    expect(mock._docs.has("fav:1")).toBe(false);
+
+    release();
+    await putP;
+
+    // Confirmed: doc persisted, overlay cleared, query still shows it.
+    expect(mock._docs.has("fav:1")).toBe(true);
+    const after = await gdb.query("favorited", { key: true });
+    expect(after.docs.map((d) => d._id)).toContain("fav:1");
+  });
+
+  it("del removes the doc from query() before the server confirms", async () => {
+    const mock = createMockVibeApi("opt-app");
+    // Seed a doc via the underlying store, then gate deletes.
+    await mock.putDoc({ favorited: true }, "fav:9");
+    const { api, release } = gatedApi(mock);
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const before = await gdb.query("favorited", { key: true });
+    expect(before.docs.map((d) => d._id)).toContain("fav:9");
+
+    const delP = gdb.del("fav:9");
+    // Instant: overlay tombstone hides it while the delete is pending.
+    const during = await gdb.query("favorited", { key: true });
+    expect(during.docs.map((d) => d._id)).not.toContain("fav:9");
+    // Still in the server store until the gate releases.
+    expect(mock._docs.has("fav:9")).toBe(true);
+
+    release();
+    await delP;
+    expect(mock._docs.has("fav:9")).toBe(false);
+  });
+
+  it("rolls back and rethrows when the write fails; UI reverts", async () => {
+    const mock = createMockVibeApi("opt-app");
+    const { api, fail } = gatedApi(mock);
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const notifies: { ids: string[]; optimistic: boolean }[] = [];
+    gdb.subscribe((docs, meta) => notifies.push({ ids: docs.map((d) => d._id), optimistic: !!meta?.optimistic }));
+
+    const putP = gdb.put({ _id: "denied", secret: true });
+    // Optimistically present.
+    const during = await gdb.query("secret", { key: true });
+    expect(during.docs.map((d) => d._id)).toContain("denied");
+
+    fail(new Error("access denied"));
+    await expect(putP).rejects.toThrow(/access denied/);
+
+    // Rolled back: gone from the overlay, and a rollback notification fired.
+    const after = await gdb.query("secret", { key: true });
+    expect(after.docs.map((d) => d._id)).not.toContain("denied");
+    expect(notifies.at(-1)).toMatchObject({ ids: ["denied"], optimistic: true });
+    expect(mock._docs.has("denied")).toBe(false);
+  });
+
+  it("mints a client id for a new doc without _id and stores under it", async () => {
+    const mock = createMockVibeApi("opt-app");
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(mock));
+    gdb.setOptimistic(true);
+    const res = await gdb.put({ title: "no id" });
+    expect(typeof res.id).toBe("string");
+    expect(res.id.length).toBeGreaterThan(0);
+    // Server stored the doc under exactly the client-minted id (no mismatch).
+    expect(mock._docs.has(res.id)).toBe(true);
+  });
+
+  it("get() serves a pending put and reports a pending delete as not-found", async () => {
+    const mock = createMockVibeApi("opt-app");
+    await mock.putDoc({ v: "server" }, "g1");
+    const { api, release } = gatedApi(mock);
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const putP = gdb.put({ _id: "g1", v: "optimistic" });
+    expect((await gdb.get("g1")).v).toBe("optimistic");
+    release();
+    await putP;
+
+    // A pending delete is reported as not-found by get() (via a fresh gated db).
+    const delGate = gatedApi(mock);
+    const gdb2 = new FireflyDatabase("optdb", asSandboxApi(delGate.api));
+    gdb2.setOptimistic(true);
+    const delP = gdb2.del("g1");
+    await expect(gdb2.get("g1")).rejects.toThrow(/optimistically deleted/);
+    delGate.release();
+    await delP;
+  });
+
+  it("materializeLive re-materializes instantly from cached server docs + overlay", async () => {
+    const mock = createMockVibeApi("opt-app");
+    await mock.putDoc({ favorited: true }, "a");
+    const { api, release } = gatedApi(mock);
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const { result, serverDocs } = await gdb.queryLive("favorited", { key: true });
+    expect(result.docs.map((d) => d._id)).toEqual(["a"]);
+
+    // A pending optimistic put — materializeLive folds it in with no round-trip.
+    const putP = gdb.put({ _id: "b", favorited: true });
+    const live = gdb.materializeLive(serverDocs, "favorited", { key: true });
+    expect(live.docs.map((d) => d._id).sort()).toEqual(["a", "b"]);
+    release();
+    await putP;
+  });
+
+  it("with optimism off, put/del keep single-notification semantics", async () => {
+    const mock = createMockVibeApi("opt-app");
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(mock));
+    // default off
+    const listener = vi.fn();
+    gdb.subscribe(listener);
+    await gdb.put({ _id: "z", n: 1 });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
