@@ -54,6 +54,11 @@ const clearFriendParamFromUrl = () => {
   } catch (e) {}
 };
 
+// Stable index functions — passed to useLiveQuery so Fireproof doesn't rebuild the
+// query on every render (an inline arrow is a new reference each time).
+const byTypeUser = (doc) => [doc.type, doc.userId];
+const byTypeFriendSlug = (doc) => [doc.type, doc.friendSlug];
+
 const migratePickathonDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.eventId}` };
   if (doc.type === "note") return { ...doc, userId: handle, _id: `note-${handle}-${doc.eventId}` };
@@ -94,10 +99,6 @@ export default function PickathonPicker() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDay, setSelectedDay] = useState("all");
   const [view, setView] = useState("now");
-  const [eventNotes, setEventNotes] = useState({});
-  const [savingNotes, setSavingNotes] = useState({});
-  const [originalNotes, setOriginalNotes] = useState({});
-  const [focusedNote, setFocusedNote] = useState(null);
   const [superMode, setSuperMode] = useState(false);
   const [viewingUser, setViewingUser] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -247,8 +248,8 @@ export default function PickathonPicker() {
     return d.toISOString().split("T")[0];
   };
 
-  const { docs: shifts } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["shift", userId] });
-  const { docs: notesDocs } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["note", userId] });
+  const { docs: shifts } = useLiveQuery(byTypeUser, { key: ["shift", userId] });
+  const { docs: notesDocs } = useLiveQuery(byTypeUser, { key: ["note", userId] });
   const notes = Object.fromEntries(notesDocs.map((n) => [n.eventId, n.notes]));
 
   const { docs: allFavorites } = useLiveQuery("type", { key: "favorite" });
@@ -276,8 +277,8 @@ export default function PickathonPicker() {
   const myFavIds = new Set(baseFavIds);
   optimisticFavs.forEach((want, id) => (want ? myFavIds.add(id) : myFavIds.delete(id)));
 
-  const { docs: friends } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["friend", userId] });
-  const { docs: friendedBy } = useLiveQuery((doc) => [doc.type, doc.friendSlug], { key: ["friend", userId] });
+  const { docs: friends } = useLiveQuery(byTypeUser, { key: ["friend", userId] });
+  const { docs: friendedBy } = useLiveQuery(byTypeFriendSlug, { key: ["friend", userId] });
 
   const friendSlugs = useMemo(() => {
     const s = new Set();
@@ -306,17 +307,6 @@ export default function PickathonPicker() {
     if (!selectedFriend) return [];
     return allShifts.filter((s) => (s.userId || "anonymous") === selectedFriend && s.shareWithFriends);
   }, [selectedFriend, allShifts]);
-
-  useEffect(() => {
-    const newEventNotes = {},
-      newOriginalNotes = {};
-    notesDocs.forEach((n) => {
-      newEventNotes[n.eventId] = n.notes;
-      newOriginalNotes[n.eventId] = n.notes;
-    });
-    setEventNotes((prev) => ({ ...newEventNotes, ...prev }));
-    setOriginalNotes((prev) => ({ ...newOriginalNotes, ...prev }));
-  }, [notesDocs]);
 
   // Once the live query catches up to an optimistic flip, drop that overlay entry.
   const baseFavSig = [...baseFavIds].sort().join("|");
@@ -396,30 +386,13 @@ export default function PickathonPicker() {
     }
   };
 
-  const saveEventNote = async (eventId) => {
-    const noteText = eventNotes[eventId] || "";
-    setSavingNotes((prev) => ({ ...prev, [eventId]: true }));
-    try {
-      const existing = notesDocs.find((n) => n.eventId === eventId);
-      if (existing) await database.put({ ...existing, notes: noteText });
-      else await database.put({ _id: `note-${userId}-${eventId}`, type: "note", eventId, notes: noteText, userId });
-      setOriginalNotes((prev) => ({ ...prev, [eventId]: noteText }));
-      setTimeout(() => setSavingNotes((prev) => ({ ...prev, [eventId]: false })), 500);
-    } catch (err) {
-      console.error("Failed to save note:", err);
-      setSavingNotes((prev) => ({ ...prev, [eventId]: false }));
-    }
+  // Called by NoteField on blur (not per keystroke). NoteField buffers the text.
+  const saveNote = async (eventId, noteText) => {
+    const existing = notesDocs.find((n) => n.eventId === eventId);
+    if (existing) await database.put({ ...existing, notes: noteText });
+    else await database.put({ _id: `note-${userId}-${eventId}`, type: "note", eventId, notes: noteText, userId });
   };
 
-  const handleNoteChange = (eventId, value) => setEventNotes((prev) => ({ ...prev, [eventId]: value }));
-  const handleNoteBlur = (eventId) => {
-    setFocusedNote(null);
-    if ((eventNotes[eventId] || "") !== (originalNotes[eventId] || "")) saveEventNote(eventId);
-  };
-  const handleNoteFocus = (eventId) => {
-    setFocusedNote(eventId);
-    setOriginalNotes((prev) => ({ ...prev, [eventId]: eventNotes[eventId] || "" }));
-  };
   const deleteShift = async (shiftId) => {
     await database.del(shiftId);
   };
@@ -629,13 +602,8 @@ export default function PickathonPicker() {
               canWrite={canWrite}
               canFavorite={canFavorite}
               toggleFavorite={toggleFavorite}
-              eventNotes={eventNotes}
-              focusedNote={focusedNote}
-              savingNotes={savingNotes}
               notes={notes}
-              handleNoteChange={handleNoteChange}
-              handleNoteBlur={handleNoteBlur}
-              handleNoteFocus={handleNoteFocus}
+              saveNote={saveNote}
               superMode={superMode}
               favCounts={favCounts}
               c={c}
@@ -728,13 +696,8 @@ export default function PickathonPicker() {
                 shiftStartRaw={shiftStartRaw}
                 shiftEndRaw={shiftEndRaw}
                 emptyMessage="No events or shifts scheduled"
-                eventNotes={eventNotes}
-                savingNotes={savingNotes}
-                onNoteChange={handleNoteChange}
-                onNoteBlur={handleNoteBlur}
-                onNoteFocus={handleNoteFocus}
+                saveNote={saveNote}
                 canWrite={canWrite}
-                focusedNote={focusedNote}
                 onToggleFavorite={canFavorite ? toggleFavorite : null}
                 myFavIds={myFavIds}
                 allEvents={events}

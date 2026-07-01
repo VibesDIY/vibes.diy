@@ -1,6 +1,7 @@
 import React from "react";
 import { toFestivalDate, festivalDayFor, fmtTime as fmtTimeUtil } from "./festival-utils.js";
 import { lineupTag, eventCardStyle, eventCardBg } from "./styles.js";
+import NoteField from "./NoteField.jsx";
 
 function GapStrip({ startMs, endMs, allDayEvents, fmtTime }) {
   const count = allDayEvents.filter((e) => {
@@ -30,13 +31,8 @@ export default function ScheduleView({
   shiftStartRaw,
   shiftEndRaw,
   emptyMessage,
-  eventNotes,
-  savingNotes,
-  onNoteChange,
-  onNoteBlur,
-  onNoteFocus,
+  saveNote,
   canWrite,
-  focusedNote,
   onToggleFavorite,
   myFavIds,
   allEvents,
@@ -154,26 +150,13 @@ export default function ScheduleView({
                           {isEvent && ` · ${item.venue}`}
                         </p>
                         {isEvent &&
-                          (canWrite && onNoteChange ? (
-                            (() => {
-                              const val = (eventNotes && eventNotes[item.data.eventId]) || "";
-                              const expanded = focusedNote === item.data.eventId || val.length > 0;
-                              return (
-                                <div className="mt-2 flex items-center gap-2">
-                                  <textarea
-                                    placeholder="Add note..."
-                                    value={val}
-                                    style={expanded ? undefined : { width: "8em" }}
-                                    onChange={(e) => onNoteChange(item.data.eventId, e.target.value)}
-                                    onBlur={() => onNoteBlur && onNoteBlur(item.data.eventId)}
-                                    onFocus={() => onNoteFocus && onNoteFocus(item.data.eventId)}
-                                    className={c.noteArea}
-                                    rows={expanded ? 2 : 1}
-                                  />
-                                  {savingNotes && savingNotes[item.data.eventId] && <div className={c.spinner}></div>}
-                                </div>
-                              );
-                            })()
+                          (canWrite && saveNote ? (
+                            <NoteField
+                              saved={notes && notes[item.data.eventId]}
+                              onSave={(t) => saveNote(item.data.eventId, t)}
+                              className={c.noteArea}
+                              collapsedStyle={{ width: "8em" }}
+                            />
                           ) : notes && notes[item.data.eventId] ? (
                             <div className={`mt-2 p-6 bg-[#EEE] dark:bg-[#22252d] rounded-lg m-2 `}>
                               <p className={`text-sm font-bold ${c.bodyText}`}>{notes[item.data.eventId]}</p>
