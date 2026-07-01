@@ -54,7 +54,10 @@ describe("buildBackendWorkerCode", () => {
     expect(main.indexOf("ALLOWED_HANDLERS")).toBeLessThan(main.indexOf("handlers[handler]"));
   });
 
-  it("pins globalOutbound to null (B8 replaces it with the egress proxy)", () => {
+  it("build output pins globalOutbound null; the executor swaps in the db transport at invoke (B6)", () => {
+    // Pure shaping stays null (no egress); WorkerLoaderBackendExecutor.invoke sets
+    // globalOutbound to the host db transport when a db callback is wired — verified
+    // by the routing tests below.
     expect(code.globalOutbound).toBeNull();
   });
 
@@ -89,14 +92,14 @@ describe("buildBackendWorkerCode", () => {
     expect(code.modules[code.mainModule]).toContain("const VIBE = null;");
   });
 
-  it("ctx.db is wired to the host env binding (B6); ctx.secrets still throws (B7)", () => {
+  it("ctx.db is wired to the host globalOutbound transport (B6); ctx.secrets still throws (B7)", () => {
     const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
-    // ctx.db is constructed from the env transport, no longer a throwing getter.
-    expect(main).toContain("db: makeDb(env, trigger, dbNonce)");
-    expect(main).toContain("env.__VIBES_DB");
+    // ctx.db is constructed from the per-invocation nonce, no longer a throwing getter.
+    expect(main).toContain("db: makeDb(trigger, dbNonce)");
+    // ctx.db reaches the host by POSTing to the internal db-op URL (routed through
+    // globalOutbound), not an env binding (env is structured-cloned).
+    expect(main).toContain("https://db.internal/op");
     expect(main).not.toMatch(/get db\(\)/);
-    // The fetch handler now receives `env` so the binding can flow into ctx.db.
-    expect(main).toMatch(/async fetch\(request, env\)/);
     // secrets remains a throwing getter until B7.
     expect(main).toMatch(/get secrets\(\) \{ throw new Error\("ctx\.secrets is not available yet/);
   });
@@ -106,14 +109,14 @@ describe("buildBackendWorkerCode", () => {
     expect(main).toMatch(/bindings=v1/);
   });
 
-  it("ctx.db.put/delete require a db and reach only the host binding (unforgeable)", () => {
+  it("ctx.db.put/delete require a db and post a typed op with the nonce (unforgeable)", () => {
     const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
-    // put/delete post a typed op to the binding; default db comes from the trigger.
+    // put/delete post a typed op wrapped with the per-invocation nonce; default db
+    // comes from the trigger.
     expect(main).toMatch(/kind: "put"/);
     expect(main).toMatch(/kind: "delete"/);
     expect(main).toMatch(/requires a db name/);
-    // The only outbound channel is the binding's fetch — never a bare global fetch.
-    expect(main).toContain("bind.fetch(");
+    expect(main).toContain("nonce: dbNonce");
   });
 });
 
@@ -236,10 +239,11 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
     expect(f.calls[0].id).toBe(f.calls[1].id);
   });
 
-  // B6: the host db callback is reached through the stable `__VIBES_DB` env
+  // B6: the host db callback is reached through the stable `globalOutbound`
   // transport, correlated by the per-invocation `dbNonce` the executor mints. This
-  // loader models the isolate calling `ctx.db.put` → `env.__VIBES_DB.fetch({ nonce,
-  // op })` using the nonce from the request body — the real path.
+  // loader models the isolate's `ctx.db.put` doing `fetch("https://db.internal/op",
+  // { nonce, op })` — routed through `globalOutbound` — using the nonce from the
+  // request body: the real path.
   function dbRoutingLoader(op: unknown) {
     const cache = new Map<string, WorkerCode>(); // models get(id, factory) caching first per id
     const calls: { id: string; warm: boolean }[] = [];
@@ -252,16 +256,15 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
           cache.set(id, code);
         }
         calls.push({ id, warm });
-        const env = code.env as Record<string, { fetch: (r: Request) => Promise<Response> }> | undefined;
+        const outbound = code.globalOutbound as { fetch: (r: Request) => Promise<Response> } | null | undefined;
         return {
           getEntrypoint() {
             return {
               fetch: async (req: Request) => {
                 const { dbNonce } = (await req.json()) as { dbNonce?: string };
-                const bind = env?.__VIBES_DB;
-                if (!bind) throw new Error("expected __VIBES_DB binding");
+                if (!outbound) throw new Error("expected a globalOutbound transport");
                 // Isolate posts the op wrapped with ITS nonce — never the identity.
-                const r = await bind.fetch(
+                const r = await outbound.fetch(
                   new Request("https://db.internal/op", { method: "POST", body: JSON.stringify({ nonce: dbNonce, op }) })
                 );
                 return new Response(JSON.stringify(await r.json()), { status: 200 });
@@ -290,10 +293,10 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
     expect(seen[0]).toEqual({ kind: "put", db: "todos", doc: { t: 1 }, docId: null });
   });
 
-  // Charlie's warm-isolate regression: a reused isolate (same id, `env` captured at
-  // first load) must NOT bleed identity/depth. Two invocations of the SAME source
-  // with DIFFERENT callbacks — the second hits the warm cached env, yet its ctx.db
-  // op must route to ITS OWN callback, not the first invocation's.
+  // Charlie's warm-isolate regression: a reused isolate (same id, `globalOutbound`
+  // captured at first load) must NOT bleed identity/depth. Two invocations of the
+  // SAME source with DIFFERENT callbacks — the second hits the warm cached
+  // transport, yet its ctx.db op must route to ITS OWN callback, not the first's.
   it("no identity/depth bleed across a warm (reused) isolate", async () => {
     const f = dbRoutingLoader({ kind: "put", db: "d", doc: {}, docId: null });
     // Distinct callbacks stand in for distinct trigger identities/depths.
@@ -309,14 +312,14 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
       trigger: {},
       db: async () => ({ ok: true, id: "writer-B" }),
     });
-    expect(f.calls[1].warm).toBe(true); // isolate was reused (same id), env captured at first load
+    expect(f.calls[1].warm).toBe(true); // isolate was reused (same id), globalOutbound captured at first load
     expect(JSON.parse(await res1.text()).id).toBe("writer-A");
     expect(JSON.parse(await res2.text()).id).toBe("writer-B"); // routed to B's callback, not A's
   });
 
-  // env is excluded from the isolate hash: the same source with a different db
-  // callback instance must reuse the same isolate id (no cache fragmentation).
-  it("env transport is excluded from the isolate id (no cache fragmentation)", async () => {
+  // globalOutbound is excluded from the isolate hash: the same source with a
+  // different db callback instance must reuse the same isolate id (no fragmentation).
+  it("globalOutbound transport is excluded from the isolate id (no cache fragmentation)", async () => {
     const f = fakeLoader();
     const exec = new WorkerLoaderBackendExecutor(f.binding);
     await exec.invoke({ source: SONOS_BACKEND, handler: "fetch", trigger: {}, db: async () => ({ ok: true, id: "a" }) });
