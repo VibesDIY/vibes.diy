@@ -212,6 +212,49 @@ export function isEvtDocChanged(obj: unknown): obj is EvtDocChanged {
   return !(evtDocChanged(obj) instanceof type.errors);
 }
 
+// ── ephemeral doc broadcast (live merge, #1756) ─────────────────────
+// Emit-only: never persisted. Carries the merged client doc snapshot so
+// receivers can synthesize a queryable overlay row. `dbName` is the real db
+// (client filter matches on it, per #2301); `channel` is the routing channel.
+
+export const reqBroadcastEphemeral = type({
+  type: "'vibes.diy.req-broadcast-ephemeral'",
+  "auth?": dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+  dbName: "string",
+  docId: "string",
+  doc: "Record<string, unknown>",
+});
+export type ReqBroadcastEphemeral = typeof reqBroadcastEphemeral.infer;
+export function isReqBroadcastEphemeral(obj: unknown): obj is ReqBroadcastEphemeral {
+  return !(reqBroadcastEphemeral(obj) instanceof type.errors);
+}
+
+export const evtDocEphemeral = type({
+  type: "'vibes.diy.evt-doc-ephemeral'",
+  ownerHandle: "string",
+  appSlug: "string",
+  dbName: "string",
+  docId: "string",
+  originPeer: "string", // sender connId — the disconnect-cleanup key
+  doc: "Record<string, unknown>", // merged client doc snapshot
+  "channel?": "string | undefined",
+});
+export type EvtDocEphemeral = typeof evtDocEphemeral.infer;
+export function isEvtDocEphemeral(obj: unknown): obj is EvtDocEphemeral {
+  return !(evtDocEphemeral(obj) instanceof type.errors);
+}
+
+export const evtDocEphemeralDrop = type({
+  type: "'vibes.diy.evt-doc-ephemeral-drop'",
+  originPeer: "string",
+});
+export type EvtDocEphemeralDrop = typeof evtDocEphemeralDrop.infer;
+export function isEvtDocEphemeralDrop(obj: unknown): obj is EvtDocEphemeralDrop {
+  return !(evtDocEphemeralDrop(obj) instanceof type.errors);
+}
+
 export const evtViewerGrantsChanged = type({
   type: "'vibes.diy.evt-viewer-grants-changed'",
   ownerHandle: "string",
