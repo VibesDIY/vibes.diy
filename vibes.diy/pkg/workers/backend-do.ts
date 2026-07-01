@@ -101,22 +101,18 @@ export class BackendDO implements DurableObject {
     if (outcome.reason === "ok") {
       return outcome.response as unknown as CFResponse;
     }
-    // Every fallback reason → 404 (attemptVibeSsr discipline). The structured
-    // reason rides an `x-backend-fallback` header (not the body) so an operator can
-    // tell "backend off" from "no fetch handler" from "executor error" without a
-    // log tail, while the body stays the opaque public "not found".
-    return new Response("backend.js _api: not found", {
-      status: 404,
-      headers: {
-        "content-type": "text/plain",
-        "x-backend-fallback": outcome.reason,
-        // Diagnostics (preview): does the DO actually see the LOADER binding + the
-        // BACKEND_JS gate? Distinguishes "loader not in DO env" from "isolate load threw".
-        "x-backend-loader": typeof (this.env as { LOADER?: unknown }).LOADER,
-        "x-backend-mode": String(this.env.BACKEND_JS ?? "(unset)"),
-        "x-backend-detail": String((outcome as { detail?: unknown }).detail ?? "").slice(0, 300),
-      },
-    });
+    // Every fallback reason → 404 (attemptVibeSsr discipline). DIAGNOSTIC (preview):
+    // the reason + whether the DO sees the LOADER binding + the invoke/select error
+    // ride the JSON body (header values can't hold newlines — that threw 1101). To
+    // be reverted to the opaque "not found" body before finalizing.
+    const diag = {
+      error: "backend.js _api: not found",
+      reason: outcome.reason,
+      loaderType: typeof (this.env as { LOADER?: unknown }).LOADER,
+      mode: String(this.env.BACKEND_JS ?? "(unset)"),
+      detail: String((outcome as { detail?: unknown }).detail ?? ""),
+    };
+    return new Response(JSON.stringify(diag), { status: 404, headers: { "content-type": "application/json" } });
   }
 
   /**
