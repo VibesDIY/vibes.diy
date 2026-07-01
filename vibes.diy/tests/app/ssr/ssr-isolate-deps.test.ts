@@ -16,10 +16,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 import { transformVibeSource } from "../../../vibe/runtime/transform-vibe-source.js";
 import { buildVibeWorkerCode } from "../../../vibe/runtime/worker-loader-executor.js";
+import { resolveVibeModuleGraph, type ResolveSibling } from "../../../vibe/runtime/resolve-vibe-module-graph.js";
 import { buildSsrIsolateDepModules } from "../../../vibe/runtime/scripts/build-ssr-isolate-deps.mjs";
 import { lockedVersions } from "../../../api/svc/intern/grouped-vibe-import-map.js";
 
@@ -55,15 +56,15 @@ function layoutModulesOnDisk(modules: Record<string, string>, mainKey: string): 
           ? "node_modules/react/index.js"
           : key === "react/jsx-runtime"
             ? "node_modules/react/jsx-runtime.js"
-            : key; // main.js / vibe.js at root
-    writeFileSync(join(root, rel), source);
+            : key; // main.js / vibe.js / nested vibe modules (lib/x.js) at root
+    const abs = join(root, rel);
+    mkdirSync(dirname(abs), { recursive: true });
+    writeFileSync(abs, source);
   }
   return { root, mainUrl: pathToFileURL(join(root, mainKey)) };
 }
 
-async function ssrRender(source: string, mountParams: unknown): Promise<string> {
-  const { module } = transformVibeSource(source);
-  const code = buildVibeWorkerCode({ module, mountParams, depModules: deps.modules });
+async function renderWorkerCode(code: { modules: Record<string, string>; mainModule: string }): Promise<string> {
   const { root, mainUrl } = layoutModulesOnDisk(code.modules, code.mainModule);
   try {
     const mod = (await import(/* @vite-ignore */ mainUrl.href)) as { default: { fetch(req: Request): Promise<Response> } };
@@ -72,6 +73,44 @@ async function ssrRender(source: string, mountParams: unknown): Promise<string> 
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+}
+
+async function ssrRender(source: string, mountParams: unknown): Promise<string> {
+  const { module } = transformVibeSource(source);
+  return renderWorkerCode(buildVibeWorkerCode({ module, mountParams, depModules: deps.modules }));
+}
+
+// In-memory sibling resolver mirroring the fsItem-backed one (extension probing).
+function graphResolverFrom(files: Record<string, string>): ResolveSibling {
+  const dirname = (p: string) => (p.lastIndexOf("/") <= 0 ? "/" : p.slice(0, p.lastIndexOf("/")));
+  const resolve = (fromDir: string, spec: string) => {
+    const segs = fromDir.split("/").filter(Boolean);
+    for (const part of spec.split("/")) {
+      if (part === "" || part === ".") continue;
+      if (part === "..") segs.pop();
+      else segs.push(part);
+    }
+    return `/${segs.join("/")}`;
+  };
+  return async (fromPath, specifier) => {
+    const base = resolve(dirname(fromPath), specifier);
+    for (const ext of ["", ".jsx", ".tsx", ".ts", ".js"]) {
+      if (files[base + ext] !== undefined) return { path: base + ext, source: files[base + ext] };
+    }
+    return null;
+  };
+}
+
+// SSR a multi-file vibe: resolve the entry's graph, then render the worker code.
+async function ssrRenderMultiFile(entrySource: string, siblings: Record<string, string>, mountParams: unknown): Promise<string> {
+  const graph = await resolveVibeModuleGraph({ path: "/App.jsx", source: entrySource }, graphResolverFrom(siblings));
+  const code = buildVibeWorkerCode({
+    vibeModules: graph.modules,
+    entryModule: graph.entryKey,
+    mountParams,
+    depModules: deps.modules,
+  });
+  return renderWorkerCode(code);
 }
 
 describe("SSR isolate dep bundle", () => {
@@ -126,5 +165,29 @@ describe("React-version parity (hydration prerequisite, #2845 / #2836)", () => {
         `[ssr-isolate-deps] React patch drift: bundle ${deps.reactVersion} vs import map ${lockedVersions.REACT} — single-source via #2836.`
       );
     }
+  });
+});
+
+describe("multi-file vibe SSR (#2845 cb6)", () => {
+  it("renders a vibe whose entry imports a sibling component", async () => {
+    const html = await ssrRenderMultiFile(
+      `import { Badge } from "./Badge.jsx"; export default function App(){ return <main><Badge/></main>; }`,
+      { "/Badge.jsx": `export function Badge(){ return <span>sibling-badge</span>; }` },
+      { usrEnv: {} }
+    );
+    expect(html).toContain("sibling-badge");
+    expect(html).toContain("<span>sibling-badge</span>");
+  });
+
+  it("renders a transitive, nested graph (entry → lib/util → lib/k) sharing one React", async () => {
+    const html = await ssrRenderMultiFile(
+      `import { label } from "./lib/util.js"; import { useState } from "react"; export default function App(){ const [n]=useState(40); return <main>{label(n)}</main>; }`,
+      {
+        "/lib/util.js": `import { plus } from "./k.js"; export const label = (n) => "sum-" + plus(n);`,
+        "/lib/k.js": `export const plus = (n) => n + 2;`,
+      },
+      { usrEnv: {} }
+    );
+    expect(html).toContain("<main>sum-42</main>");
   });
 });

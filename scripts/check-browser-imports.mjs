@@ -41,6 +41,7 @@ const excludePatterns = [
   /node-executor\.ts$/,
   /worker-loader-executor\.ts$/,
   /ssr-source-check\.ts$/,
+  /resolve-vibe-module-graph\.ts$/,
 ];
 
 // Packages that are bundled INTO the privateNpm packages at build time

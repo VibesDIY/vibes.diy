@@ -17,7 +17,9 @@
 //       isolate body inside `vibe-app-container`;
 //   (b) HEAD → no executor work (loader never invoked) + empty body;
 //   (c) renderPendingVibe → no marker, executor never invoked;
-//   (d) relative-import vibe → client-only fallback (no marker, no executor).
+//   (d) multi-file vibe (entry imports a resolvable sibling) → SSRs through the
+//       resolved relative-import graph (#2845 cb6);
+//   (e) entry importing an UNRESOLVABLE sibling → client-only fallback.
 
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, it } from "vitest";
@@ -159,13 +161,11 @@ describe("renderVibe end-to-end SSR (loader executor, fake binding)", { timeout:
     expect(getCalls.length).toBe(before);
   });
 
-  it("(d) relative-import vibe → client-only fallback (no marker, executor never invoked)", async () => {
-    // App.jsx with a relative import is outside the single-file scope slice 4
-    // SSRs; attemptVibeSsr returns relative_import_unsupported BEFORE calling the
-    // executor, so the route ships the empty marker-less container. The Badge.jsx
-    // helper is included so this mirrors the known-good multi-file fixture (the
-    // convention entry is still the single App.jsx — selectConventionEntry only
-    // matches /App.{jsx,tsx}).
+  it("(d) multi-file vibe (entry imports a sibling) → SSRs through the resolved graph (#2845 cb6)", async () => {
+    // App.jsx imports a sibling that IS in the fsItems, so attemptVibeSsr resolves
+    // the whole relative-import graph and ships it to the isolate — no longer the
+    // single-file-only client-only fallback. The convention entry is still the
+    // single /App.jsx (selectConventionEntry only matches /App.{jsx,tsx}).
     const rRes = await api.ensureAppSlug({
       mode: "dev",
       fileSystem: [
@@ -193,10 +193,25 @@ describe("renderVibe end-to-end SSR (loader executor, fake binding)", { timeout:
     const res = await api.cfg.fetch(entryUrl(app));
     expect(res.status).toBe(200);
     const html = await res.text();
+    // The graph resolved, so the isolate ran and the marker + body were injected.
+    expect(html).toContain("data-vibe-ssr");
+    expect(html).toContain("e2e-ssr-isolate-body");
+    expect(getCalls.length).toBeGreaterThan(before);
+  });
+
+  it("(e) entry importing an unresolvable sibling → client-only fallback (no marker, executor untouched)", async () => {
+    // The sibling /Missing.jsx is NOT in the fsItems, so the graph can't resolve;
+    // attemptVibeSsr degrades to client-only (relative_import_unsupported) before
+    // instantiating the isolate rather than shipping a broken module graph.
+    const app = await ensureApp(`import { X } from "./Missing.jsx"; export default function App() { return <div><X /></div>; }`);
+
+    const before = getCalls.length;
+    const res = await api.cfg.fetch(entryUrl(app));
+    expect(res.status).toBe(200);
+    const html = await res.text();
     expect(html).toContain('class="vibe-app-container"');
     expect(html).not.toContain("data-vibe-ssr");
     expect(html).not.toContain("e2e-ssr-isolate-body");
-    // The relative-import gate fires before render(), so the isolate is untouched.
     expect(getCalls.length).toBe(before);
   });
 });

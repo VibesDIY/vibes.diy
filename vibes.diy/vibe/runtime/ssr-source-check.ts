@@ -5,11 +5,10 @@ import { transformVibeSource } from "./transform-vibe-source.js";
  * Does this vibe source statically import a sibling file (`./Badge.jsx`,
  * `../lib/x.js`)? (#2802 slice 4.)
  *
- * Slice-4 SSR renders **single-file entries** only; a relative import means
- * sibling modules the executor can't resolve yet (the relative / full
- * dependency-graph resolution slice 2 deferred), so the caller falls back to
- * client-only rendering with reason `relative_import_unsupported` rather than
- * SSR-ing a tree that would mismatch on hydrate.
+ * The caller uses this to route: no relative imports → render the single entry
+ * directly; a relative import → resolve the whole module graph and SSR it
+ * (`resolveVibeModuleGraph`, #2845 cb6). Only a graph that fails to resolve (a
+ * broken/missing sibling) falls back to client-only (`relative_import_unsupported`).
  *
  * `es-module-lexer` can't parse JSX, so we transform to JS first (the same
  * Sucrase pass the executor runs) and lex the compiled module. Dynamic

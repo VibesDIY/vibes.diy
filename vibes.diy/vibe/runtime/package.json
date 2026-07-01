@@ -8,6 +8,7 @@
     "./vibe-executor.js": "./vibe-executor.js",
     "./worker-loader-executor.js": "./worker-loader-executor.js",
     "./ssr-source-check.js": "./ssr-source-check.js",
+    "./resolve-vibe-module-graph.js": "./resolve-vibe-module-graph.js",
     "./render-vibes.js": "./render-vibes.js",
     "./parse-backend-config.js": "./parse-backend-config.js",
     "./backend-executor.js": "./backend-executor.js"
