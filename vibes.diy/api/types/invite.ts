@@ -321,6 +321,23 @@ export function isActiveColorTheme(obj: unknown): obj is ActiveColorTheme {
   return !(ActiveColorTheme(obj) instanceof type.errors);
 }
 
+// Records the structural theme that was last sent to the codegen LLM as design
+// guidance (the `<theme-design-md>` restyle block). Written server-side after a
+// successful codegen turn that included the theme; read on the next turn's
+// prompt assembly to decide whether to re-inject the theme. The block is sent
+// only on the initial turn or when `active.theme` differs from this marker —
+// i.e. when a NEW theme was selected — so a follow-up that isn't a theme change
+// leaves the design block out and doesn't fight user-driven custom design work.
+// Server-internal: no client mutates it and it is not surfaced in AppSettings.
+export const ActiveCodegenTheme = type({
+  type: "'active.codegen-theme'",
+  theme: "string",
+});
+export type ActiveCodegenTheme = typeof ActiveCodegenTheme.infer;
+export function isActiveCodegenTheme(obj: unknown): obj is ActiveCodegenTheme {
+  return !(ActiveCodegenTheme(obj) instanceof type.errors);
+}
+
 export const IconVersion = type({
   cid: "string",
   mime: "string",
@@ -472,6 +489,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveSkills)
   .or(ActiveTheme)
   .or(ActiveColorTheme)
+  .or(ActiveCodegenTheme)
   .or(ActiveIcon)
   .or(ActiveAvatar)
   .or(ActiveIconDescription)

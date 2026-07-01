@@ -1,7 +1,9 @@
 import { Result, exception2Result } from "@adviser/cement";
 import {
+  ActiveCodegenTheme,
   ActiveEntry,
   PromptAndBlockMsgs,
+  isActiveCodegenTheme,
   isActiveEnrichedPrompt,
   isActiveSkills,
   isActiveTheme,
@@ -112,7 +114,7 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
 async function loadActiveSettings(
   vctx: VibesApiSQLCtx,
   chatId: string
-): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string }> {
+): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string; codegenTheme?: string }> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, ownerHandle: vctx.sql.tables.chatContexts.ownerHandle })
@@ -138,6 +140,7 @@ async function loadActiveSettings(
     theme: entries.find(isActiveTheme)?.theme,
     title: entries.find(isActiveTitle)?.title,
     enrichedPrompt: entries.find(isActiveEnrichedPrompt)?.enrichedPrompt,
+    codegenTheme: entries.findLast(isActiveCodegenTheme)?.theme,
   };
 }
 
@@ -242,15 +245,29 @@ export async function assemblePromptPayload(
   // title hint line entirely.
   // Pre-allocation preview (dry-run) supplies these in-memory so we skip the
   // DB read entirely and persist nothing; otherwise read from app_settings.
-  const { skills, theme, title, enrichedPrompt } = args.activeSettingsOverride ?? (await loadActiveSettings(vctx, chatId));
+  const activeSettings = args.activeSettingsOverride ?? (await loadActiveSettings(vctx, chatId));
+  const { skills, theme, title, enrichedPrompt } = activeSettings;
+  // `codegenTheme` is the theme last baked into the app by codegen (persisted
+  // after a theme-including turn). The override path (dry-run pre-alloc) never
+  // supplies it, which is fine: those previews are always initial turns.
+  const codegenTheme = "codegenTheme" in activeSettings ? activeSettings.codegenTheme : undefined;
   const isInitial = timeline.length === 0;
+
+  // Theme design (the `<theme-design-md>` restyle block) and the app-workflow
+  // preamble are initial-shaping guidance. Re-sending them on every follow-up
+  // makes the theme fight user-driven custom design work, so they ride only on
+  // the initial turn or when a NEW theme was selected — detected as the active
+  // theme differing from what codegen last baked in. Skill/API docs (and the
+  // title hint) are unconditional; the model needs them to edit correctly.
+  const themeChanged = (theme ?? "") !== (codegenTheme ?? "");
+  const includeTheme = isInitial || themeChanged;
 
   const systemPrompt = await exception2Result(async () => {
     return makeBaseSystemPrompt(model, {
       skills,
-      theme,
+      theme: includeTheme ? theme : undefined,
       title,
-      enrichedPrompt,
+      enrichedPrompt: includeTheme ? enrichedPrompt : undefined,
       demoData: false,
       variant: isInitial ? "initial" : "continuation",
       pkgBaseUrl: promptsPkgBaseUrl(vctx.params.pkgRepos.workspace),
@@ -361,4 +378,46 @@ export async function assemblePromptPayload(
       ...finalNewUser,
     ],
   });
+}
+
+/**
+ * After a successful codegen turn, record the structural theme that codegen was
+ * built against as an `active.codegen-theme` marker in app_settings. The next
+ * turn's `assemblePromptPayload` compares the live `active.theme` against this
+ * marker: equal ⇒ the theme design block is omitted (no theme change since the
+ * last build); different (or absent) ⇒ a new theme was selected, so the block is
+ * re-injected. Idempotent — writes only when the marker is stale, so ordinary
+ * follow-ups that don't touch the theme incur no write.
+ *
+ * Best-effort: a failure here only means the next turn may re-send the theme
+ * design once, so callers can ignore the result rather than fail the turn.
+ * Keyed by (userId, ownerHandle, appSlug) to match the app_settings PK; for
+ * codegen the requester is always the owner, so `userId` is the owner's.
+ */
+export async function persistCodegenThemeMarker(
+  vctx: VibesApiSQLCtx,
+  args: { readonly userId: string; readonly ownerHandle: string; readonly appSlug: string }
+): Promise<void> {
+  const t = vctx.sql.tables.appSettings;
+  const row = await vctx.sql.db
+    .select({ userId: t.userId, settings: t.settings })
+    .from(t)
+    .where(and(eq(t.appSlug, args.appSlug), eq(t.ownerHandle, args.ownerHandle), eq(t.userId, args.userId)))
+    .limit(1)
+    .then((r) => r[0]);
+  if (row === undefined) return;
+
+  const { filtered } = parseArrayWarning((row.settings ?? []) as ActiveEntry[], ActiveEntry);
+  const activeTheme = filtered.find(isActiveTheme)?.theme;
+  const markedTheme = filtered.findLast(isActiveCodegenTheme)?.theme;
+  if ((activeTheme ?? "") === (markedTheme ?? "")) return;
+
+  const next: ActiveEntry[] = [
+    ...filtered.filter((e) => !isActiveCodegenTheme(e)),
+    ...(activeTheme ? [{ type: "active.codegen-theme", theme: activeTheme } satisfies ActiveCodegenTheme] : []),
+  ];
+  await vctx.sql.db
+    .update(t)
+    .set({ settings: next, updated: new Date().toISOString() })
+    .where(and(eq(t.appSlug, args.appSlug), eq(t.ownerHandle, args.ownerHandle), eq(t.userId, args.userId)));
 }
