@@ -30,7 +30,18 @@ export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher)
       timeout: 30000,
     });
 
-    // Give the page an extra moment after network idle so the full render
+    // The vibe route shows a "Verifying access…" chip (a toast) while it resolves
+    // the viewer's grant, and the app only paints once that clears. `networkidle0`
+    // can settle while this is still on screen, so wait for the chip to disappear
+    // before capturing — otherwise we shoot the loading state, not the app. Bounded
+    // so a stuck/never-shown chip can't hang the job; we fall through on timeout.
+    await page
+      .waitForFunction(() => !document.body.innerText.includes("Verifying access"), { timeout: 15000, polling: 100 })
+      .catch(() => {
+        console.warn(`"Verifying access" chip did not clear within timeout for ${event.vibeUrl}; capturing anyway`);
+      });
+
+    // Give the page an extra moment after access resolves so the full render
     // (post-hydration paint, fonts, late layout) can settle before capture.
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
