@@ -11,8 +11,10 @@ export const c = {
   brandText: "font-black uppercase tracking-tight text-[1.4rem] sm:text-[1.6rem]",
   sub: "text-[0.7rem] uppercase tracking-[0.18em] text-[#1A1A1A]/70",
   nav: "flex gap-2 flex-wrap justify-end",
-  navBtn: "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider bg-[#FFFDF5] border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] hover:shadow-[5px_5px_0_#1A1A1A] hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all disabled:opacity-40 disabled:pointer-events-none",
-  navBtnOn: "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider bg-[#E83D6F] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] transition-all",
+  navBtn:
+    "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider bg-[#FFFDF5] border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] hover:shadow-[5px_5px_0_#1A1A1A] hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all disabled:opacity-40 disabled:pointer-events-none",
+  navBtnOn:
+    "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider bg-[#E83D6F] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] transition-all",
   dateCard: "relative bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[6px_6px_0_#E83D6F] p-6 sm:p-8 mb-6",
   dateRow: "flex items-center justify-between gap-3 mb-2",
   dateLabel: "text-[0.7rem] uppercase tracking-[0.22em] text-[#FFCB05]",
@@ -37,7 +39,8 @@ export const c = {
   newsflash: "bg-[#FFCB05] border-2 border-[#1A1A1A] px-3 py-2 mb-3 text-[0.85rem] font-bold flex items-start gap-2",
   details: "text-[0.9rem] leading-relaxed text-[#1A1A1A]/85 whitespace-pre-wrap mb-4",
   actions: "flex flex-wrap gap-2 pt-3 border-t-2 border-dashed border-[#1A1A1A]/30",
-  actionBtn: "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] hover:shadow-[5px_5px_0_#1A1A1A] hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all",
+  actionBtn:
+    "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] hover:shadow-[5px_5px_0_#1A1A1A] hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all",
   actionCal: "bg-[#C6F08C]",
   actionLink: "bg-[#7DD3FC]",
   actionWeb: "bg-[#FFFDF5]",
@@ -47,9 +50,11 @@ export const c = {
   favLabel: "text-[0.7rem] uppercase tracking-[0.18em] font-bold text-[#1A1A1A]/70",
   avatarPile: "flex items-center -space-x-2",
   avatar: "w-7 h-7 rounded-full border-2 border-[#1A1A1A] bg-[#FFFDF5] object-cover",
-  avatarFallback: "w-7 h-7 rounded-full border-2 border-[#1A1A1A] bg-[#FFCB05] flex items-center justify-center text-[0.62rem] font-black uppercase",
+  avatarFallback:
+    "w-7 h-7 rounded-full border-2 border-[#1A1A1A] bg-[#FFCB05] flex items-center justify-center text-[0.62rem] font-black uppercase",
   avatarMore: "ml-3 text-[0.78rem] font-bold text-[#1A1A1A]/70",
-  noteArea: "w-full bg-[#FFF6E5] border-[3px] border-[#1A1A1A] px-3 py-2 text-[0.88rem] font-bold resize-none focus:outline-none focus:shadow-[3px_3px_0_#1A1A1A] transition-shadow",
+  noteArea:
+    "w-full bg-[#FFF6E5] border-[3px] border-[#1A1A1A] px-3 py-2 text-[0.88rem] font-bold resize-none focus:outline-none focus:shadow-[3px_3px_0_#1A1A1A] transition-shadow",
   img: "w-full max-w-[280px] mt-1 mb-4 border-[3px] border-[#1A1A1A] shadow-[4px_4px_0_#1A1A1A] object-cover",
   empty: "text-center py-16 text-[1.1rem] font-bold",
   err: "bg-[#FFD8D8] border-[3px] border-[#E83D6F] shadow-[4px_4px_0_#E83D6F] px-4 py-3 mb-6 font-bold",
@@ -61,5 +66,6 @@ export const c = {
   linkRow: "flex items-stretch gap-2 mb-6",
   linkInput: "flex-1 min-w-0 bg-[#FFF6E5] border-[3px] border-[#1A1A1A] px-3 py-2 text-[0.82rem] font-bold truncate",
   friendRow: "flex items-center gap-3 py-2 border-b-2 border-dashed border-[#1A1A1A]/20",
-  signinCallout: "bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#FFCB05] px-4 py-3 mb-6 font-bold text-[0.9rem] flex items-center gap-2",
+  signinCallout:
+    "bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#FFCB05] px-4 py-3 mb-6 font-bold text-[0.9rem] flex items-center gap-2",
 };

@@ -38,7 +38,9 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
 
       {event.venue && (
         <div className={c.venue}>
-          <span className="mt-0.5 text-[#E83D6F]"><Icon d={ICONS.pin} /></span>
+          <span className="mt-0.5 text-[#E83D6F]">
+            <Icon d={ICONS.pin} />
+          </span>
           <div>
             <div className={c.venueText}>{event.venue}</div>
             {mapUrl && (
@@ -86,7 +88,11 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
 
       <div className={c.actions}>
         {canFavorite && (
-          <button onClick={() => toggleFavorite(event)} aria-pressed={!!myFav} className={`${c.actionBtn} ${myFav ? c.actionFavOn : c.actionFavOff}`}>
+          <button
+            onClick={() => toggleFavorite(event)}
+            aria-pressed={!!myFav}
+            className={`${c.actionBtn} ${myFav ? c.actionFavOn : c.actionFavOff}`}
+          >
             <Icon d={ICONS.heart} size={16} />
             {myFav ? "Favorited" : "Favorite"}
           </button>
