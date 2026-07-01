@@ -402,8 +402,18 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                       spot); with text present it's a send button that queues the
                       message for the next turn (queue-ahead, like the big chat
                       apps). Queued messages batch into one prompt and auto-send
-                      when the turn ends. */}
-                  <OtherRow onSubmitOther={props.onSubmitOther} generating={props.generating} onStop={props.onStop} />
+                      when the turn ends. Keyed by the vibe's identity: the /vibe
+                      route component is REUSED across client-side navigations, so
+                      without the key a queue (or draft text) built against one
+                      app would survive into the next and auto-flush into the
+                      wrong vibe's onSubmitOther (Codex P2 on #3020). The route
+                      passes appSlug as "owner/slug", so this is the full identity. */}
+                  <OtherRow
+                    key={props.appSlug}
+                    onSubmitOther={props.onSubmitOther}
+                    generating={props.generating}
+                    onStop={props.onStop}
+                  />
                 </>
               )}
             </div>
