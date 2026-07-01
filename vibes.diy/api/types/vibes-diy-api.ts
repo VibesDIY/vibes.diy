@@ -9,6 +9,8 @@ import {
   ResListRecentVibes,
   ReqPinRecentVibe,
   ResPinRecentVibe,
+  ReqSetUnpublish,
+  ResSetUnpublish,
   ReqGetChatDetails,
   ResGetChatDetails,
   ReqGetAppByFsId,
@@ -201,6 +203,10 @@ export interface VibesDiyApiIface<_T = unknown> {
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;
   listRecentVibes(req: Req<ReqListRecentVibes>): Promise<Result<ResListRecentVibes, VibesDiyError>>;
   pinRecentVibe(req: Req<ReqPinRecentVibe>): Promise<Result<ResPinRecentVibe, VibesDiyError>>;
+  // Owner-only soft-tombstone (#2688): unpublish:true removes the vibe from
+  // public serving and hides it from the owner's sidebar; unpublish:false
+  // restores it. No data is destroyed, so a "delete" here is reversible.
+  setUnpublish(req: Req<ReqSetUnpublish>): Promise<Result<ResSetUnpublish, VibesDiyError>>;
   getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>>;
   getChatResponse(req: Req<ReqGetChatResponse>): Promise<Result<ResGetChatResponse, VibesDiyError>>;
   getVibeChips(req: Req<ReqGetVibeChips>): Promise<Result<ResGetVibeChips, VibesDiyError>>;

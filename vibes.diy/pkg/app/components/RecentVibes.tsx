@@ -7,6 +7,7 @@ import { useVibesDiy } from "../vibes-diy-provider.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 import { PushpinIcon } from "./HeaderContent/SvgIcons.js";
 import { RecentVibeRowMenu } from "./RecentVibeRowMenu.js";
+import { DeleteVibeConfirmModal } from "./DeleteVibeConfirmModal.js";
 
 function VibeIconThumb({ icon }: { icon?: { cid: string; mime: string } }) {
   if (!icon) return <span className="h-6 w-6 shrink-0" aria-hidden="true" />;
@@ -28,6 +29,10 @@ function rowKey(item: { ownerHandle: string; appSlug: string }): string {
 
 function isPinned(pinnedAt: string | undefined): boolean {
   return pinnedAt !== undefined && pinnedAt.length > 0;
+}
+
+function isUnpublished(unpublishedAt: string | undefined): boolean {
+  return unpublishedAt !== undefined && unpublishedAt.length > 0;
 }
 
 function displayTitle(item: { title?: string; appSlug: string }): string {
@@ -55,8 +60,17 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
   // Set when Enter/Escape have already handled the edit so the synchronous
   // blur fired by the input's unmount does not re-commit pendingTitle.
   const skipBlurCommitRef = useRef(false);
+  // The vibe queued for deletion (drives the confirmation modal), plus the
+  // in-flight/error state of the setUnpublish call it triggers.
+  const [deletingItem, setDeletingItem] = useState<ResRecentVibesItem | null>(null);
+  const [deleteInFlight, setDeleteInFlight] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (!isSignedIn) return null;
+
+  // Deleting a vibe soft-tombstones it (setUnpublish); those rows stay in the
+  // API payload for restore elsewhere but must not appear in the sidebar.
+  const visibleItems = items.filter((item) => !isUnpublished(item.unpublishedAt));
 
   async function handlePinToggle(item: ResRecentVibesItem) {
     const key = rowKey(item);
@@ -106,20 +120,48 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
     notifyRecentVibesChanged({ ownerHandle: item.ownerHandle, appSlug: item.appSlug, title: trimmed });
   }
 
+  async function handleConfirmDelete(item: ResRecentVibesItem) {
+    const key = rowKey(item);
+    setDeleteInFlight(true);
+    setDeleteError(null);
+    const res = await sharedApi.setUnpublish({
+      ownerHandle: item.ownerHandle,
+      appSlug: item.appSlug,
+      unpublish: true,
+    });
+    setDeleteInFlight(false);
+    if (res.isErr()) {
+      // Keep the modal open so the user can retry or cancel.
+      setDeleteError(res.Err().message);
+      return;
+    }
+    // Mark the row unpublished locally so it drops out of `visibleItems`
+    // immediately; the next refresh returns it already tombstoned.
+    mutate((prev) => prev.map((row) => (rowKey(row) === key ? { ...row, unpublishedAt: res.Ok().unpublishedAt } : row)));
+    setDeletingItem(null);
+    notifyRecentVibesChanged();
+  }
+
+  function closeDeleteModal() {
+    if (deleteInFlight) return;
+    setDeletingItem(null);
+    setDeleteError(null);
+  }
+
   return (
     <div>
       {loading ? (
         <div className="flex justify-center py-2">
           <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
         </div>
-      ) : error && items.length === 0 ? (
+      ) : error && visibleItems.length === 0 ? (
         <div className="px-4 pb-1 text-xs">
           <p className="opacity-60">Couldn&apos;t load recent vibes.</p>
           <button type="button" onClick={() => void refresh()} className="mt-1 underline opacity-80 hover:opacity-100">
             Retry
           </button>
         </div>
-      ) : items.length > 0 ? (
+      ) : visibleItems.length > 0 ? (
         <>
           {!hideTitle && (
             <h3 className="sticky -top-3 bg-light-background-00 dark:bg-dark-background-00 px-4 pt-7 pb-2 text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50 z-10">
@@ -127,7 +169,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
             </h3>
           )}
           <ul className="ml-3">
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const key = rowKey(item);
               const isEditing = editingId === key;
               const menuOpen = openMenuId === key;
@@ -217,6 +259,10 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
                       setPendingTitle(item.title ?? "");
                       setEditingId(key);
                     }}
+                    onDelete={() => {
+                      setDeleteError(null);
+                      setDeletingItem(item);
+                    }}
                   />
                 </li>
               );
@@ -237,6 +283,15 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
         </>
       ) : (
         <div className="px-4 pb-1 text-xs opacity-60">No recent vibes yet.</div>
+      )}
+      {deletingItem && (
+        <DeleteVibeConfirmModal
+          title={displayTitle(deletingItem)}
+          inFlight={deleteInFlight}
+          error={deleteError}
+          onConfirm={() => void handleConfirmDelete(deletingItem)}
+          onCancel={closeDeleteModal}
+        />
       )}
     </div>
   );

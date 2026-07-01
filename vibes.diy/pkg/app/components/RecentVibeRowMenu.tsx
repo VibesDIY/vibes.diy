@@ -6,13 +6,14 @@ interface RecentVibeRowMenuProps {
   onClose: () => void;
   onPinToggle: () => void;
   onRenameStart: () => void;
+  onDelete: () => void;
 }
 
 // Inline (non-portal) dropdown for a single sidebar row. Lives inside the
 // row's <li>, so the SessionSidebar's outside-click handler keeps the
 // sidebar open as long as the click stays inside it. The menu's own
 // outside-click closes only itself.
-export function RecentVibeRowMenu({ isPinned, open, onClose, onPinToggle, onRenameStart }: RecentVibeRowMenuProps) {
+export function RecentVibeRowMenu({ isPinned, open, onClose, onPinToggle, onRenameStart, onDelete }: RecentVibeRowMenuProps) {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -89,6 +90,17 @@ export function RecentVibeRowMenu({ isPinned, open, onClose, onPinToggle, onRena
         }}
       >
         Rename
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className={`${itemBase} border-t border-black/10 text-red-600 hover:bg-red-500/10 dark:border-white/10 dark:text-red-400`}
+        onClick={() => {
+          onDelete();
+          onClose();
+        }}
+      >
+        Delete
       </button>
     </div>
   );
