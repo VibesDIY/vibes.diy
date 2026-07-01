@@ -27,6 +27,9 @@ export const c = {
   count: "mt-3 text-[0.85rem] text-[#FFF6E5]/80",
   skip: "bg-[#FFCB05] text-[#1A1A1A] border-[3px] border-[#1A1A1A] shadow-[4px_4px_0_#1A1A1A] px-4 py-3 mb-6 font-bold text-[0.92rem] flex items-start gap-2",
   list: "flex flex-col gap-5",
+  dayHead:
+    "font-black uppercase tracking-tight text-[1.05rem] sm:text-[1.2rem] mb-4 pb-2 border-b-[3px] border-[#1A1A1A] flex items-baseline justify-between gap-2",
+  dayHeadCount: "text-[0.75rem] font-bold tracking-wider text-[#1A1A1A]/60",
   card: "bg-[#FFFDF5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#1A1A1A] p-5 sm:p-6 hover:shadow-[7px_7px_0_#1A1A1A] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all",
   timeRow: "flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2",
   time: "font-black text-[1.5rem] sm:text-[1.8rem] leading-none tracking-tight text-[#E83D6F]",
