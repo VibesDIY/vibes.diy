@@ -29,7 +29,7 @@ Vite HMRs client-side TS, but Server-side TS imported via React-Router SSR may h
 
 - **`window.__*Debug` only exists when the resolver actually ran.** If the snapshot is `null`, the code path you're debugging didn't execute — e.g. the React effect hasn't fired yet, or the wrong fsId is in the URL.
 - **fsIds are content-addressed hashes.** Two failing turns can produce the same fsId because empty content always hashes to the same value. Don't assume "same fsId = same turn." Compare content lengths and snapshot timestamps.
-- **The iframe sandbox loads from a different host** (`<appSlug>--<userHandle>.localhost.vibesdiy.net:8888`). Fetching the persisted asset to confirm what the iframe sees is the only way to distinguish "client-only fix landed" from "fully fixed."
+- **The iframe sandbox loads from a different host** (`<appSlug>--<userHandle>.localhost.vibesdiy.net:8888`). Fetching the persisted asset to confirm what the iframe sees is the only way to distinguish "client-only fix landed" from "fully fixed." For **reading/measuring a deployed vibe's own DOM** across that origin boundary (console/title channels, exact-geometry recipe, the frame-guard redirect, px-scaled Tailwind), see [`vibe-iframe-inspection.md`](vibe-iframe-inspection.md).
 - **Replace markers (`<<<<<<< SEARCH`) inside chat history bubbles** are visible to the user — that's a UX issue, not a parser bug.
 
 ## Cleanup
