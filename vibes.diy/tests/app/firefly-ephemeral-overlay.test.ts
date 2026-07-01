@@ -92,4 +92,15 @@ describe("FireflyDatabase ephemeral overlay (#1756)", () => {
     vi.advanceTimersByTime(20_000);
     await expect(db.get("c-a")).rejects.toThrow(/Failed to get document/);
   });
+
+  it("broadcastEphemeral delegates to the transport with this db's name", () => {
+    const calls: { docId: string; doc: Record<string, unknown>; dbName?: string }[] = [];
+    const api = createMockVibeApi("test-app");
+    // Override the no-op mock to capture the delegated call.
+    (api as unknown as { broadcastEphemeral: (d: string, doc: Record<string, unknown>, db?: string) => void }).broadcastEphemeral =
+      (docId, doc, dbName) => calls.push({ docId, doc, dbName });
+    const localDb = new FireflyDatabase("mydb", asSandboxApi(api));
+    localDb.broadcastEphemeral("cursor-x", { _id: "cursor-x", curX: 3 });
+    expect(calls).toEqual([{ docId: "cursor-x", doc: { _id: "cursor-x", curX: 3 }, dbName: "mydb" }]);
+  });
 });
