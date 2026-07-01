@@ -117,8 +117,10 @@ export type ListenerFn<T extends DocTypes = DocTypes> = (changes: DocWithId<T>[]
 /**
  * A pending optimistic write, layered over the server's materialized view until
  * the write round-trips. `put` carries the optimistic doc; `del` is a tombstone.
+ * `token` identifies the write that owns this entry so an earlier overlapping
+ * write for the same _id doesn't clobber a newer one when it resolves (#2985).
  */
-type OverlayEntry<T extends DocTypes = DocTypes> = { kind: "put"; doc: DocWithId<T> } | { kind: "del" };
+type OverlayEntry<T extends DocTypes = DocTypes> = ({ kind: "put"; doc: DocWithId<T> } | { kind: "del" }) & { token: number };
 
 export interface IndexRow<T extends DocTypes = DocTypes> {
   key: string;
@@ -199,6 +201,9 @@ export class FireflyDatabase {
   // useFireproof(db, { optimistic: false })).
   private optimisticEnabled = false;
   private readonly overlay = new Map<string, OverlayEntry>();
+  // Monotonic per-write token so a resolving/failing write only touches the
+  // overlay entry it still owns — see clearOverlay (#2985).
+  private writeSeq = 0;
 
   constructor(name: string, vibeApi: FireflyTransport, acl?: DbAcl) {
     this.name = name;
@@ -321,12 +326,13 @@ export class FireflyDatabase {
     // key churn when the authoritative doc takes over.
     const optimistic = this.optimisticEnabled;
     const id = doc._id ?? (optimistic ? newOptimisticId() : undefined);
+    const token = ++this.writeSeq;
     if (optimistic && id !== undefined) {
       // decorateFiles is a no-op when there are no _files; a doc with raw
       // File/Blob entries still renders from the caller's own state until the
       // confirmed doc (with server-minted meta.url) replaces it.
       const optimisticDoc = decorateFiles({ ...doc, _id: id }) as DocWithId;
-      this.overlay.set(id, { kind: "put", doc: optimisticDoc });
+      this.overlay.set(id, { kind: "put", doc: optimisticDoc, token });
       this.notifyListeners([optimisticDoc], { optimistic: true });
     }
     try {
@@ -346,23 +352,25 @@ export class FireflyDatabase {
       if (!isResPutDoc(res)) {
         throw new Error(`Failed to put document: ${JSON.stringify(res)}`);
       }
-      // Confirmed: drop the optimistic entry and let the authoritative doc take
-      // over. notifyListeners triggers the live query's server refresh, which
-      // now returns the persisted doc — no flicker when they match.
-      if (id !== undefined) this.overlay.delete(id);
+      // Confirmed: drop the optimistic entry (only if a newer overlapping write
+      // hasn't superseded it) and let the authoritative doc take over.
+      // notifyListeners triggers the live query's server refresh, which now
+      // returns the persisted doc — no flicker when they match.
+      if (id !== undefined) this.clearOverlay(id, token);
       const savedDoc = { ...docToPut, _id: res.id } as DocWithId<T>;
       this.notifyListeners([savedDoc]);
       return { id: res.id, ok: true };
     } catch (err) {
-      this.rollback(id);
+      this.rollback(id, token);
       throw err;
     }
   }
 
   async del(id: string): Promise<DocResponse> {
     const optimistic = this.optimisticEnabled;
+    const token = ++this.writeSeq;
     if (optimistic) {
-      this.overlay.set(id, { kind: "del" });
+      this.overlay.set(id, { kind: "del", token });
       this.notifyListeners([{ _id: id, _deleted: true } as DocWithId], { optimistic: true });
     }
     try {
@@ -374,23 +382,37 @@ export class FireflyDatabase {
       if (!isResDeleteDoc(res)) {
         throw new Error(`Failed to delete document: ${JSON.stringify(res)}`);
       }
-      if (optimistic) this.overlay.delete(id);
+      if (optimistic) this.clearOverlay(id, token);
       this.notifyListeners([{ _id: res.id, _deleted: true } as DocWithId]);
       return { id: res.id, ok: true };
     } catch (err) {
-      this.rollback(id);
+      this.rollback(id, token);
       throw err;
     }
   }
 
   /**
+   * Drop an overlay entry only if the given write still owns it. When two
+   * writes for the same _id overlap (rapid toggle / autosave), the later one
+   * overwrites the entry with a new token; an earlier write resolving or
+   * failing must NOT clobber that newer pending value — so it clears only on a
+   * token match, leaving the newer write's overlay in place (#2985).
+   */
+  private clearOverlay(id: string, token: number): boolean {
+    if (this.overlay.get(id)?.token !== token) return false;
+    this.overlay.delete(id);
+    return true;
+  }
+
+  /**
    * Undo a pending optimistic entry after its write failed (access denied,
    * conflict, network) and notify so live queries revert — the UI never
-   * silently lies. No-op if the entry was already cleared/confirmed (#2985).
+   * silently lies. No-op when the entry was already cleared/confirmed or a
+   * newer write has since superseded it (that newer write is now the intended
+   * state and stays pending) (#2985).
    */
-  private rollback(id: string | undefined): void {
-    if (id === undefined || !this.overlay.has(id)) return;
-    this.overlay.delete(id);
+  private rollback(id: string | undefined, token: number): void {
+    if (id === undefined || !this.clearOverlay(id, token)) return;
     this.notifyListeners([{ _id: id } as DocWithId], { optimistic: true });
   }
 
