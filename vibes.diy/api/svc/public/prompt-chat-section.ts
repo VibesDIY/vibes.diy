@@ -97,6 +97,7 @@ import {
 import {
   reconstructConversationMessages,
   assemblePromptPayload,
+  persistCodegenThemeMarker,
   type ReconstructOpts,
   type AssemblePromptPayloadArgs,
 } from "../intern/prompt-assembly.js";
@@ -920,6 +921,24 @@ export async function handlePromptContext({
     return Result.Err(rSql);
   }
 
+  // Codegen just built the app against the app's active theme; record it so the
+  // next turn only re-sends the `<theme-design-md>` block when the theme changes
+  // (see persistCodegenThemeMarker / assemblePromptPayload). Only meaningful when
+  // this turn committed a filesystem (a real code change); best-effort, so a
+  // failure never fails the turn — it only risks re-sending the theme once.
+  if (resChat.mode === "codegen" && fsRef.IsSome()) {
+    const rMark = await exception2Result(() =>
+      persistCodegenThemeMarker(vctx, {
+        userId: req._auth.verifiedAuth.claims.userId,
+        ownerHandle: resChat.ownerHandle,
+        appSlug: resChat.appSlug,
+      })
+    );
+    if (rMark.isErr()) {
+      vctx.logger.Warn().Err(rMark).Str("chatId", req.chatId).Msg("persistCodegenThemeMarker failed");
+    }
+  }
+
   await chunkyAsync({
     input: sections,
     splitCondition: (secChunk) => secChunk.length >= 20,
@@ -936,7 +955,7 @@ export async function handlePromptContext({
   return Result.Ok({ blockSeq, fsRef });
 }
 
-export { reconstructConversationMessages, assemblePromptPayload };
+export { reconstructConversationMessages, assemblePromptPayload, persistCodegenThemeMarker };
 export type { ReconstructOpts, AssemblePromptPayloadArgs };
 
 interface ResChat {
