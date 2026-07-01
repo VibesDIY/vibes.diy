@@ -657,7 +657,15 @@ export default function VibeIframeWrapper() {
           // JUMP (curated cross-slug link) — keyed on the SLUG alone (#2941), NOT
           // the source fsId, so the glyph survives a source-vibe update without a
           // re-bless (matches the durable link key the click lane resolves).
-          {
+          //
+          // Gated on NO stay hit, mirroring resolveCachedRead's stay-first priority:
+          // the click lane tries the version-pinned stay key first and returns that
+          // hit before consulting the link, and UnifiedVibeCard lets the → jump badge
+          // win over the 🛡 shield — so if we set `jump` while a stay also hit, the
+          // badge would promise a jump the click won't keep (Codex #2969). Stays and
+          // curated links don't coexist by construction, but keep badge + click in
+          // lockstep (and skip the extra lookup when a stay already won).
+          if (!shielded) {
             const linkKey = cachedSuggestionVibeLinkKey({ ownerHandle, appSlug, transform: chip });
             try {
               const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key: linkKey });
