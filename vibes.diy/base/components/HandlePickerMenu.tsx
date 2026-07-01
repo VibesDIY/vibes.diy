@@ -89,8 +89,11 @@ export function HandlePickerMenu({
         Acting as
       </div>
       {/* The handle list scrolls on its own so a long roster can't push the
-          "New handle" / "Log out" rows off-screen (vibe-handles-menu-scroll). */}
-      <div style={{ maxHeight: "40vh", overflowY: "auto" }}>
+          "New handle" / "Log out" rows off-screen (vibe-handles-menu-scroll).
+          Capped to the viewport (minus room for the header + pinned footer rows)
+          so the footer stays visible when the menu floats near the top of the
+          screen — even on short viewports. */}
+      <div style={{ maxHeight: "min(40vh, calc(100vh - 280px))", overflowY: "auto" }}>
         {handles.map((h) => (
           <HandleRow
             key={h.slug}

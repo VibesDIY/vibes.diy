@@ -151,12 +151,15 @@ const UNIFIED_VIBE_CARD_DARK_VARS = `
   --color-light-background-01: var(--color-dark-background-01, #222222);
   --color-light-background-02: var(--color-dark-background-02, #222222);`;
 
+// `[data-vibe-handle-menu]` is the detached (fixed-layer) handle picker, which
+// renders as a SIBLING of the card rather than a descendant, so it needs the
+// same light→dark token remap applied directly or it stays white in dark mode.
 const unifiedVibeCardDarkCss = `
 @media (prefers-color-scheme: dark) {
-  [data-unified-vibe-card] {${UNIFIED_VIBE_CARD_DARK_VARS}
+  [data-unified-vibe-card], [data-vibe-handle-menu] {${UNIFIED_VIBE_CARD_DARK_VARS}
   }
 }
-.dark [data-unified-vibe-card] {${UNIFIED_VIBE_CARD_DARK_VARS}
+.dark [data-unified-vibe-card], .dark [data-vibe-handle-menu] {${UNIFIED_VIBE_CARD_DARK_VARS}
 }`;
 
 export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
@@ -178,11 +181,16 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
     props.onHandlePickerOpenChange?.(next);
   };
   const pickerWrapRef = useRef<HTMLDivElement>(null);
+  // The picker menu floats in a fixed layer OUTSIDE the card's clipped body (see
+  // the render), so click-away must treat BOTH the trigger anchor and the
+  // detached menu as "inside" — otherwise clicking a menu row dismisses it.
+  const menuRef = useRef<HTMLDivElement>(null);
   // Click-away: close the picker when a pointer-down lands outside its anchor.
   useEffect(() => {
     if (!pickerOpen) return;
     const onDown = (e: MouseEvent) => {
-      if (!pickerWrapRef.current?.contains(e.target as Node)) setPickerOpen(false);
+      const target = e.target as Node;
+      if (!pickerWrapRef.current?.contains(target) && !menuRef.current?.contains(target)) setPickerOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -312,37 +320,10 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                       flexShrink: 0,
                     }}
                   />
-                  {pickerInteractive && pickerOpen && (
-                    <HandlePickerMenu
-                      handles={props.handles ?? []}
-                      activeSlug={props.handleSlug}
-                      busy={props.handlePickerBusy}
-                      // Opens DOWNWARD into the card body. The tag anchors at the
-                      // TOP of the card header and the card clips overflow
-                      // (`overflow: hidden` on the dialog), so opening "up" would
-                      // render the menu above the card's top edge and clip it
-                      // (Codex P1 on #2990). The card body extending below the tag
-                      // is where the room actually is; the now-scrollable list
-                      // (maxHeight 40vh) keeps a long roster reachable there.
-                      placement="down"
-                      onSelect={(slug) => {
-                        props.onSelectHandle?.(slug);
-                        setPickerOpen(false);
-                      }}
-                      onNewHandle={(handle) => {
-                        props.onNewHandle?.(handle);
-                        setPickerOpen(false);
-                      }}
-                      onLogout={
-                        props.onLogout
-                          ? () => {
-                              props.onLogout?.();
-                              setPickerOpen(false);
-                            }
-                          : undefined
-                      }
-                    />
-                  )}
+                  {/* The picker MENU is rendered separately, in a fixed layer near
+                      the top of the viewport (see `floating handle picker` below),
+                      so it escapes the card's `overflow: hidden` clipping and can
+                      scroll all the way to its bottom rows. */}
                 </div>
               ) : (
                 <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
@@ -478,6 +459,48 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               <div aria-hidden style={{ width: 120, height: 60, flexShrink: 0, marginLeft: "auto" }} />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating handle picker: rendered OUTSIDE the clipped card as its own
+          fixed layer, anchored near the top of the viewport (not to the trigger,
+          which sits at the card's top and would push the menu off-screen). It
+          overlaps just past the card's right edge (`right: 6` vs the card's
+          `right: 12`) for a casual, detached look, and — being viewport-bounded
+          rather than trapped in the card's `overflow: hidden` body — you can
+          always scroll to its bottom rows. `data-vibe-handle-menu` picks up the
+          same dark-mode var remap as the card (it's no longer a descendant). */}
+      {open && pickerInteractive && pickerOpen && props.handleSlug && (
+        <div
+          ref={menuRef}
+          data-vibe-handle-menu
+          className="text-light-primary dark:text-dark-primary"
+          style={{ position: "fixed", top: 16, right: 6, zIndex: 4 }}
+        >
+          <HandlePickerMenu
+            handles={props.handles ?? []}
+            activeSlug={props.handleSlug}
+            busy={props.handlePickerBusy}
+            // Rendered in normal flow inside the fixed wrapper above, so clear the
+            // component's own absolute anchoring.
+            style={{ position: "static", right: "auto", top: "auto", bottom: "auto" }}
+            onSelect={(slug) => {
+              props.onSelectHandle?.(slug);
+              setPickerOpen(false);
+            }}
+            onNewHandle={(handle) => {
+              props.onNewHandle?.(handle);
+              setPickerOpen(false);
+            }}
+            onLogout={
+              props.onLogout
+                ? () => {
+                    props.onLogout?.();
+                    setPickerOpen(false);
+                  }
+                : undefined
+            }
+          />
         </div>
       )}
 
@@ -831,12 +854,37 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
       // crowded against the field's right edge.
       className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-3"
     >
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Describe a change…"
-        className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
-      />
+      {/* Faux placeholder: a real `placeholder` attribute is plain text and can't
+          carry a strikethrough, so when the field is empty we overlay a
+          non-interactive span that CAN — `<s>magic</s>`. It's aria-hidden (the
+          input keeps an aria-label) and pointer-events:none so it never
+          intercepts focus/typing. */}
+      <div style={{ position: "relative", flex: 1, minWidth: 0, display: "flex" }}>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          aria-label="Change the app"
+          className="w-full bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none"
+        />
+        {value === "" && (
+          <span
+            aria-hidden
+            className="text-sm text-light-secondary dark:text-dark-secondary"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Change the app with <s>magic</s> words…
+          </span>
+        )}
+      </div>
       {/* Round submit button mirroring the homepage / chat composer's send
           button (circular, near-black, white up-arrow) — scaled down to fit
           the one-line edit field. See NewSessionContent.styles getSubmitButtonStyle. */}
