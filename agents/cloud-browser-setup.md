@@ -88,23 +88,60 @@ browserType.launch: Executable doesn't exist at
 Please run … : playwright install
 ```
 
-…and the naive `playwright install` ALSO fails in this env: its built-in
-downloader pulls the ~180 MiB zip in one shot with no resume, and the agent
-egress proxy drops the long transfer at ~80% every time
-(`Download failed: server closed connection`). The headless-shell build is worse
-— it's served (via the `dbazure` CDN path) from
-`playwright.download.prss.microsoft.com`, which the proxy hard-blocks
-(`HTTP 400 "GatewayExceptionResponse"`).
+### vitest browser-mode suites: no install needed (#2989)
 
-**The fix — run this before the repo's browser tests in a cloud session:**
+Our **vitest** browser projects (`vibes.diy/tests/app`, `vibes.diy/tests/simple-chat`,
+`prompts/tests`, `use-vibes/tests`, `call-ai/v2`) now run in a cloud session with
+**no browser download at all**. Each browser config feeds its provider through a
+shared helper:
+
+```ts
+import { cloudChromiumProviderOptions } from "…/scripts/vitest-cloud-chromium.mjs";
+// …
+provider: playwright(cloudChromiumProviderOptions()),
+```
+
+Inside the cloud container (`/opt/pw-browsers` exists) the helper points Playwright
+at the full Chromium **already in the image** via `launchOptions.executablePath`
+(Playwright doesn't version-gate a binary you hand it, so the 1194↔1228 revision
+mismatch stops mattering) and drops the sandbox (`chromiumSandbox: false` +
+`--disable-dev-shm-usage`) so headless Chromium starts as root. It only falls back
+to the image's Chromium when the exact pinned headless-shell build is missing — if
+you've run `pnpm playwright:install` (below), the matching build is used instead.
+On CI and local workstations `/opt/pw-browsers` is absent, so the helper is a
+complete no-op and Playwright's default resolution is untouched.
+
+So: just run the suite. `cd vibes.diy/tests/app && pnpm test` works out of the box.
+
+**Pure-logic suites without a browser at all.** For node-only suites (e.g.
+`firefly-database.test.ts`) you can skip browser mode entirely:
+
+```bash
+pnpm exec vitest run --browser.enabled=false --environment=node
+```
+
+This runs only what doesn't touch the DOM — handy for a fast logic check, but it
+can't run `renderHook`/RTL/component tests (those need the browser fallback above).
+
+### The exact pinned build: `pnpm playwright:install`
+
+For `@playwright/test` suites (screenshots, real navigation) or when you want the
+_exact_ pinned Chromium revision rather than the image's 1194, provision it:
 
 ```bash
 pnpm run playwright:install      # → scripts/install-pw-chromium.sh
 ```
 
-It is idempotent (a fast no-op once `chromium-<rev>` is installed) and a no-op on
-a local workstation (no `/opt/pw-browsers`), so it's always safe to run. How it
-sidesteps the proxy:
+The naive `playwright install` fails in this env: its built-in downloader pulls the
+~180 MiB zip in one shot with no resume, and the agent egress proxy drops the long
+transfer at ~80% every time (`Download failed: server closed connection`). The
+headless-shell build is worse — it's served (via the `dbazure` CDN path) from
+`playwright.download.prss.microsoft.com`, which the proxy hard-blocks
+(`HTTP 400 "GatewayExceptionResponse"`).
+
+`pnpm playwright:install` is idempotent (a fast no-op once `chromium-<rev>` is
+installed) and a no-op on a local workstation (no `/opt/pw-browsers`), so it's
+always safe to run. How it sidesteps the proxy:
 
 - The **Chrome-for-Testing** ("cft") artifacts — both the headful chrome and the
   headless-shell — are served from `storage.googleapis.com`, which the proxy
