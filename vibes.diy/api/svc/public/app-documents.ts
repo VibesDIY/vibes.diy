@@ -1,4 +1,4 @@
-export { putDocEvento, deleteDocEvento } from "./app-documents-write-eventos.js";
+export { putDocEvento, deleteDocEvento, broadcastEphemeralEvento } from "./app-documents-write-eventos.js";
 export {
   getDocEvento,
   queryDocsEvento,

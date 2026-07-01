@@ -18,6 +18,8 @@ import {
   EvtViewerGrantsChanged,
   isDirectChannel,
   directChannelParticipants,
+  reqBroadcastEphemeral,
+  ReqBroadcastEphemeral,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -25,9 +27,9 @@ import { checkAuth, optAuth } from "../check-auth.js";
 import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { type } from "arktype";
 import { checkDocAccess } from "./access-helpers.js";
-import { type AccessDescriptor } from "./access-function.js";
+import { extractExportSource, type AccessDescriptor } from "./access-function.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
-import { resolveAccessBinding, resolveDmParticipantHandle } from "./access-binding-resolver.js";
+import { resolveAccessBinding, resolveAccessFnSource, resolveDmParticipantHandle } from "./access-binding-resolver.js";
 import { GrantReduce, extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
@@ -126,6 +128,122 @@ async function validateFilesUploads(
     }
   }
   return { ok: true };
+}
+
+// ── shared access-fn invocation (write path + ephemeral broadcast) ──
+//
+// The persisted write path and the ephemeral-broadcast handler must derive a
+// doc's channels IDENTICALLY — a divergence here would be a security bug (an
+// ephemeral could reach the wrong audience). Both therefore run the SAME access
+// fn on the same inputs via this helper. The write path keeps the full
+// `invokeResult` (for grant application + accessFnOutputs upsert); the ephemeral
+// path takes only `deriveAccessChannels` (channels, read-only).
+
+export interface InvokeAccessFnForDocParams {
+  ownerHandle: string;
+  appSlug: string;
+  dbName: string;
+  docId: string;
+  doc: Record<string, unknown>;
+  oldDoc: unknown | null;
+  userContext: { userHandle: string; isOwner: boolean } | null;
+  adminMode: boolean;
+}
+
+// Resolve access.js source, build grant state from stored outputs, and invoke
+// the access fn on `doc`. Returns the raw invoke result plus the seeded reduce
+// (the write path reuses the reduce as `grantsReduceBefore`). Callers must have
+// already confirmed `afbRow.accessFnCid && vctx.invokeAccessFn`.
+export async function invokeAccessFnForDoc(
+  vctx: VibesApiSQLCtx,
+  p: InvokeAccessFnForDocParams,
+  afbRow: { accessFnCid: string; accessFnAssetUri?: string; dbName: string }
+): Promise<{ invokeResult: AccessDescriptor | { forbidden: string }; reduce: GrantReduce }> {
+  const fnCid = afbRow.accessFnCid;
+
+  // Resolve the access.js source (per-DO CID cache → asset store; the built-in
+  // DM source is compiled in). See resolveAccessFnSource / #2512.
+  // extractExportSource is dbName-dependent (cheap, in-memory string work), so it
+  // runs per invoke against the resolved source rather than caching the extracted
+  // result — the CID-keyed cache only elides the R2 fetch.
+  const rawSource = await resolveAccessFnSource(vctx, fnCid, afbRow.accessFnAssetUri);
+  const accessFnSource = rawSource !== undefined ? (extractExportSource(rawSource, afbRow.dbName) ?? rawSource) : undefined;
+
+  // Build reduce from stored outputs for grant state
+  const tOutputs = vctx.sql.tables.accessFnOutputs;
+  const storedOutputs = await vctx.sql.db
+    .select({ docId: tOutputs.docId, output: tOutputs.output })
+    .from(tOutputs)
+    .where(
+      and(
+        eq(tOutputs.ownerHandle, p.ownerHandle),
+        eq(tOutputs.appSlug, p.appSlug),
+        eq(tOutputs.dbName, p.dbName),
+        eq(tOutputs.fnCid, fnCid),
+        eq(tOutputs.hasGrants, 1)
+      )
+    );
+
+  const reduce = newSeededReduce(p.ownerHandle);
+  for (const row of storedOutputs) {
+    reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+  }
+
+  const grantState = {
+    members: Object.fromEntries(Array.from(reduce.effectiveMembers).map(([k, v]) => [k, Array.from(v)])),
+    roleGrants: Object.fromEntries(Array.from(reduce.roleGrants).map(([k, v]) => [k, Array.from(v)])),
+    userGrants: Object.fromEntries(Array.from(reduce.userGrants).map(([k, v]) => [k, Array.from(v)])),
+  };
+
+  const invokeResult = await vctx.invokeAccessFn!({
+    cid: fnCid,
+    doc: { ...p.doc, _id: p.docId },
+    oldDoc: p.oldDoc,
+    user: p.userContext,
+    source: accessFnSource,
+    grantState,
+    adminMode: p.adminMode,
+    ownerHandle: p.ownerHandle,
+  });
+
+  return { invokeResult, reduce };
+}
+
+export interface DeriveChannelsParams {
+  ownerHandle: string;
+  appSlug: string;
+  dbName: string;
+  docId: string;
+  doc: Record<string, unknown>;
+  userContext: { userHandle: string; isOwner: boolean } | null;
+  adminMode: boolean;
+}
+
+// Runs the access fn on `doc` and returns its normalized channels. Read-only: no
+// grant application, no accessFnOutputs upsert (that stays in the write path). A
+// vibe with no access fn (or no invoker) yields [] → db-wide (bare-db) routing.
+export async function deriveAccessChannels(
+  vctx: VibesApiSQLCtx,
+  p: DeriveChannelsParams,
+  afbRow: { accessFnCid?: string; accessFnAssetUri?: string; dbName: string } | undefined
+): Promise<string[]> {
+  if (!afbRow?.accessFnCid || !vctx.invokeAccessFn) return []; // no access fn → db-wide
+  const { invokeResult } = await invokeAccessFnForDoc(
+    vctx,
+    {
+      ownerHandle: p.ownerHandle,
+      appSlug: p.appSlug,
+      dbName: p.dbName,
+      docId: p.docId,
+      doc: p.doc,
+      oldDoc: null,
+      userContext: p.userContext,
+      adminMode: p.adminMode,
+    },
+    { accessFnCid: afbRow.accessFnCid, accessFnAssetUri: afbRow.accessFnAssetUri, dbName: afbRow.dbName }
+  );
+  if ("forbidden" in invokeResult) return []; // forbidden → no channels → no fan-out
+  return normalizeChannels(invokeResult.channels ?? []);
 }
 
 // ── putDoc ──────────────────────────────────────────────────────────
@@ -825,6 +943,94 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
         id: req.docId,
       } satisfies ResDeleteDoc);
       return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};
+
+// ── broadcastEphemeral (live merge, #1756) ──────────────────────────
+//
+// Emit-only: never persisted. Derives the doc's channels from the access fn
+// (identically to the write path, via deriveAccessChannels) and fans out one
+// evt-doc-ephemeral per channel to peers on that channel — exact-channel routing,
+// no bare-db fallback (the snapshot is the disclosure, #1756 P1). Fire-and-forget:
+// no res-* response; returns Continue immediately and does the derive + fan-out on
+// a detached async task.
+
+const EPHEMERAL_CHANNEL_TTL_MS = 2000; // #1756: bound access-fn evals under 60Hz bursts
+const ephemeralChannelCache = new Map<string, { channels: string[]; at: number }>();
+
+export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqBroadcastEphemeral>, never> = {
+  hash: "broadcast-ephemeral",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    const ret = reqBroadcastEphemeral(msg.payload);
+    if (ret instanceof type.errors) return Result.Ok(Option.None());
+    return Result.Ok(Option.Some({ ...msg, payload: ret }));
+  }),
+  handle: optAuth(
+    async (
+      ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithOptionalAuth<ReqBroadcastEphemeral>>, never>
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const senderConnId = clientWsSend(ctx).connId;
+      const userId = req._auth?.verifiedAuth.claims.userId ?? null;
+      const isDm = isDirectChannel(req.ownerHandle);
+      const adminMode = connectionAdminMode(ctx);
+      void (async () => {
+        // Derive channels via the access fn, cached per (owner/app/db/docId) for
+        // 2s so a 60Hz cursor burst re-evaluates at most once per TTL. Channel
+        // membership depends on stable fields, not curX/curY.
+        const cacheKey = `${req.ownerHandle}/${req.appSlug}/${req.dbName}/${req.docId}`;
+        const cached = ephemeralChannelCache.get(cacheKey);
+        let channels: string[];
+        if (cached && Date.now() - cached.at < EPHEMERAL_CHANNEL_TTL_MS) {
+          channels = cached.channels;
+        } else {
+          const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, req.dbName);
+          // Mirror the write handler's isOwner / writer-handle resolution so the
+          // access fn sees the same user context it would on a persisted write.
+          let isOwner = false;
+          if (userId && !isDm && afbRow?.accessFnCid) {
+            const docAccessResult = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, adminMode);
+            isOwner = docAccessResult.isOwner;
+          }
+          const writerHandle = userId
+            ? isDm
+              ? await resolveDmParticipantHandle(vctx, userId, req.ownerHandle)
+              : await resolveActiveHandle(vctx, userId)
+            : undefined;
+          const userContext = writerHandle ? { userHandle: writerHandle, isOwner } : null;
+          channels = await deriveAccessChannels(
+            vctx,
+            {
+              ownerHandle: req.ownerHandle,
+              appSlug: req.appSlug,
+              dbName: req.dbName,
+              docId: req.docId,
+              doc: { ...req.doc, _id: req.docId },
+              userContext,
+              adminMode: isOwner && adminMode,
+            },
+            afbRow
+          );
+          ephemeralChannelCache.set(cacheKey, { channels, at: Date.now() });
+        }
+        const base = {
+          ownerHandle: req.ownerHandle,
+          appSlug: req.appSlug,
+          dbName: req.dbName,
+          docId: req.docId,
+          doc: req.doc,
+        };
+        if (channels.length) {
+          for (const channel of channels) {
+            await vctx.notifyDocEphemeral?.({ ...base, channel }, senderConnId);
+          }
+        } else {
+          await vctx.notifyDocEphemeral?.(base, senderConnId); // non-access-fn → bare dbKey
+        }
+      })().catch((e: unknown) => console.error("ephemeral notify error:", e));
+      return Result.Ok(EventoResult.Continue); // fire-and-forget, no response
     }
   ),
 };
