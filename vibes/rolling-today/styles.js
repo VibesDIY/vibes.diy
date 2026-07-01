@@ -66,7 +66,9 @@ export const c = {
   avatarMore: "ml-3 text-[0.78rem] font-bold text-[#1A1A1A]/70",
   noteArea:
     "w-full bg-[#FFF6E5] border-[3px] border-[#1A1A1A] px-3 py-2 text-[0.88rem] font-bold resize-none focus:outline-none focus:shadow-[3px_3px_0_#1A1A1A] transition-shadow",
-  img: "w-full max-w-[280px] mt-1 mb-4 border-[3px] border-[#1A1A1A] shadow-[4px_4px_0_#1A1A1A] object-cover",
+  // Fixed height reserves the image box before the src loads, so late-loading ride
+  // flyers don't shove the content below them down (no layout shift / jump).
+  img: "block w-full max-w-[280px] h-[200px] mt-1 mb-4 border-[3px] border-[#1A1A1A] shadow-[4px_4px_0_#1A1A1A] object-cover bg-[#1A1A1A]/5",
   empty: "text-center py-16 text-[1.1rem] font-bold",
   err: "bg-[#FFD8D8] border-[3px] border-[#E83D6F] shadow-[4px_4px_0_#E83D6F] px-4 py-3 mb-6 font-bold",
   foot: "mt-12 pt-6 border-t-2 border-[#1A1A1A]/30 text-[0.78rem] text-[#1A1A1A]/65 flex flex-wrap items-center gap-x-4 gap-y-2 justify-between",

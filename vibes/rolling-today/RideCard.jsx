@@ -47,7 +47,7 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
         </div>
       )}
 
-      {!condensed && imgUrl && <img className={c.img} src={imgUrl} alt="" loading="lazy" />}
+      {!condensed && imgUrl && <img className={c.img} src={imgUrl} alt="" loading="lazy" width={280} height={200} />}
 
       {event.venue && (
         <div className={c.venue}>
