@@ -35,10 +35,10 @@ export const c = {
   shiftForm: "bg-[#BACD32] dark:bg-[#2c3510] rounded-2xl m-2 p-10 mb-6",
   spinner: "w-4 h-4 m-2 rounded-full animate-spin",
   readOnlyBanner: "mt-2 bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] px-7 py-6 rounded-lg text-sm font-bold m-2",
-  // Callout at the bottom-left, sized to match the Vibes switch (60px tall, 28px
-  // up from the bottom) at the bottom-right so the two line up.
+  // Callout at the bottom-left, locked to the Vibes switch height (60px, 28px up
+  // from the bottom) with even padding so the two read as a balanced pair.
   signInCallout:
-    "bg-[#181a20] text-white px-4 rounded-2xl shadow-2xl text-[11px] font-bold border border-white/20 text-left leading-tight min-h-[60px] flex items-center",
+    "bg-[#181a20] text-white h-[60px] px-4 flex items-center rounded-2xl shadow-2xl text-[11px] font-bold border border-white/20 text-left leading-snug",
 };
 
 export const lineupTag = (event) => {
