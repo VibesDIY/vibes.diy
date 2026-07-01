@@ -305,9 +305,9 @@ workers_dev = true
 # only, so ctx.db write-through-access + the fetch/scheduled/onChange lanes can be
 # validated end-to-end on the same env.LOADER binding — same "prove it off prod"
 # discipline. The BackendDO reads this via env.BACKEND_JS; anything but "loader"
-# (incl. prod, which is unset) leaves backend.js dark (a missing loader binding
-# degrades to 404, never a 500). Prod stays off until the beta is GA + B8's egress
-# proxy lands.
+# leaves backend.js dark (a missing loader binding degrades to 404, never a 500).
+# Prod flipped on after the preview validation (#2946, owner-approved); handler
+# egress stays closed there until B8.
 vars = { ENVIRONMENT = "preview", VIBES_CACHED_SUGGESTIONS = "on", VIBES_SSR = "loader", BACKEND_JS = "loader" }
 # No routes here — the builder SPA + API are served on the workers.dev URL.
 # The PR-preview workflow ALSO attaches per-PR routes on the CLI
@@ -424,7 +424,16 @@ name = "vibes-diy-v2-prod"
 # result the OWNER already produced from public source on a public app. Empty/unset
 # ⇒ nobody is an admin ⇒ inert. This entry is jchris's prod account
 # (jchris@vibes.diy); preview is a separate Clerk instance with a different userId.
-vars = { ENVIRONMENT = "prod", VIBES_CACHED_SUGGESTIONS = "on", VIBES_ADMIN_USER_IDS = "user_35qSx41QMpmEitTV4nltiIT4I7f" }
+#
+# BACKEND_JS="loader" turns on the per-app backend.js runtime (#2856, B6 flip,
+# owner-approved on #2946) — ctx.db write-through-access + the fetch/scheduled/
+# onChange lanes, validated end-to-end on the PR preview's env.LOADER binding
+# first. Needs the [[env.prod.worker_loaders]] LOADER binding below (a missing
+# binding degrades to 404, never a 500). Handler egress stays CLOSED — the
+# isolate's globalOutbound services only the internal db-op URL and 403s all
+# other fetches — so no open-Internet access until B8's egress proxy. VIBES_SSR
+# stays off here (separate flag, #2845).
+vars = { ENVIRONMENT = "prod", VIBES_CACHED_SUGGESTIONS = "on", VIBES_ADMIN_USER_IDS = "user_35qSx41QMpmEitTV4nltiIT4I7f", BACKEND_JS = "loader" }
 logpush = true
 routes = [
   { pattern = "prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
@@ -515,6 +524,14 @@ bucket_name = "vibes-diy-fs-ids"
 [[env.prod.queues.producers]]
 queue = "vibes-service-prod"
 binding = "VIBES_SERVICE"
+
+# Worker Loader binding for the per-app backend.js isolate executor (#2856; also
+# what vibe SSR would consume if VIBES_SSR flips, #2845). Open-beta feature; not
+# inherited by wrangler across named envs, so it's declared per-env. Consumed as
+# env.LOADER (CFEnv.LOADER). The BackendDO passes it to selectBackendExecutor;
+# without it every backend lane degrades to its dark fallback.
+[[env.prod.worker_loaders]]
+binding = "LOADER"
 
 [env.cli]
 name = "vibes-diy-v2-cli"
