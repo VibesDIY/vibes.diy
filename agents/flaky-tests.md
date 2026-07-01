@@ -84,6 +84,36 @@ The switch only governs _test_ failures. **Harness/setup failures always fail th
 
 Two image gotchas the masking hid for ages: the Playwright image tag is derived from `pnpm exec playwright --version` (not `pnpm why`, whose JSON shape changed under pnpm 10 and silently produced an invalid `:v-noble` tag), and `pnpm` is activated **inside** the container via `corepack` (the image ships only node/npm, but the vitest globalSetup runs `pnpm exec drizzle-kit`). Both fail fast on an unresolved version before `docker run`.
 
+## `cancelled` ≠ `failure` (superseded runs, #2992)
+
+A CI run that concluded because it was **superseded** is not a broken build. When
+a new push (or a second event on the same push) lands, `concurrency:
+cancel-in-progress` cancels the in-flight run on that ref — every job concludes
+`cancelled`, not `failure`. GitHub check-run conclusions are not binary:
+`success`, `failure`, `cancelled`, `skipped`, and `neutral` are all distinct.
+
+The tell for a superseded run is the **all-`cancelled` fingerprint** in the
+`compile_test` gate log:
+
+```
+scope=cancelled checks=cancelled test=cancelled publish_build=cancelled
+```
+
+That is not something to debug — a superseding run is already in flight and will
+produce the real verdict on the latest commit. Don't burn a loop on it, and don't
+push an empty commit to "re-run": just wait for (or look at) the newer run.
+
+The gate no longer manufactures a red ✗ out of this: `compile_test` gates on
+`if: ${{ !cancelled() && … }}` (not `always()`), so a run-level cancellation
+reaches the gate too and it is `skipped` alongside its upstreams rather than
+exiting `1`. A real upstream `failure` still runs the gate (a `failure` isn't a
+`cancellation`) and still reports red. See [`.github/workflows/ci.yaml`](../.github/workflows/ci.yaml)
+`compile_test`.
+
+For agents subscribed to PR activity: a `cancelled` (or `skipped`) `compile_test`
+is a no-op, not an actionable failure — the superseding run's `success` is the
+signal to act on.
+
 ## Pre-run instrumentation
 
 To find "dumb work" before tests actually execute, `actions/base` also captures:
