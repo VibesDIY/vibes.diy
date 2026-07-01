@@ -101,8 +101,14 @@ export class BackendDO implements DurableObject {
     if (outcome.reason === "ok") {
       return outcome.response as unknown as CFResponse;
     }
-    // Every fallback reason → 404 (attemptVibeSsr discipline).
-    return new Response("backend.js _api: not found", { status: 404, headers: { "content-type": "text/plain" } });
+    // Every fallback reason → 404 (attemptVibeSsr discipline). The structured
+    // reason rides an `x-backend-fallback` header (not the body) so an operator can
+    // tell "backend off" from "no fetch handler" from "executor error" without a
+    // log tail, while the body stays the opaque public "not found".
+    return new Response("backend.js _api: not found", {
+      status: 404,
+      headers: { "content-type": "text/plain", "x-backend-fallback": outcome.reason },
+    });
   }
 
   /**
