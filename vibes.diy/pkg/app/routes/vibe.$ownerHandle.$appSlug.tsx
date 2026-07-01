@@ -401,7 +401,11 @@ export default function VibeIframeWrapper() {
       // so we skip the codegen auto-fire (no prompt64) and the user lands instantly
       // on their fork with the chip already applied. Any miss forks normally (the
       // chip's codegen still runs). Custom prompts pass no cacheKey (never cached).
-      const runWriteLane = (cacheKey?: string) => {
+      // Returns a promise when the lane's work is async (the /remix hop, the
+      // inline fork + navigation) so a chip click can hold its working state
+      // until the hand-off actually lands (Codex P2 on #3027); undefined when
+      // feedback is immediate (owner codegen → streamBody, double-tap no-op).
+      const runWriteLane = (cacheKey?: string): Promise<void> | undefined => {
         // Owner: generate in place (PR-A).
         if (isOwner) {
           generation.sendPrompt(trimmed);
@@ -411,8 +415,9 @@ export default function VibeIframeWrapper() {
         // Logged-out non-owner: keep the existing /remix hop (it handles
         // login -> fork -> prompt). Seamless inline fork needs a signed-in user.
         if (!authSignedIn) {
-          void navigate(`/remix/${ownerHandle}/${appSlug}?${new URLSearchParams({ prompt64 }).toString()}`);
-          return;
+          return (async () => {
+            await navigate(`/remix/${ownerHandle}/${appSlug}?${new URLSearchParams({ prompt64 }).toString()}`);
+          })();
         }
         // Signed-in non-owner: make-it-yours INLINE, then land on the fork's /vibe
         // page carrying the prompt. The fork must complete (and the URL must point
@@ -422,7 +427,7 @@ export default function VibeIframeWrapper() {
         if (forkingRef.current) return;
         forkingRef.current = true;
         const tid = toast.loading("Making it yours…");
-        void (async () => {
+        return (async () => {
           const rFork = await vctx.chatApi.forkApp({
             srcUserSlug: ownerHandle,
             srcAppSlug: appSlug,
@@ -441,7 +446,7 @@ export default function VibeIframeWrapper() {
           // does NOT re-run codegen on top of it. Otherwise carry prompt64 to
           // auto-fire the chip's generation as before.
           const seeded = rFork.Ok().seededFromCache === true;
-          void navigate(forkDestination(rFork.Ok(), seeded ? null : prompt64), { replace: true });
+          await navigate(forkDestination(rFork.Ok(), seeded ? null : prompt64), { replace: true });
         })();
       };
 
@@ -478,7 +483,9 @@ export default function VibeIframeWrapper() {
           : null;
 
       if (!isOfferedChip) {
-        runWriteLane();
+        // Custom prompts come from the composer (not OptionButtons), which has
+        // its own feedback — fire and forget.
+        void runWriteLane();
         return;
       }
 
@@ -559,7 +566,11 @@ export default function VibeIframeWrapper() {
               transform: trimmed,
             })
           : undefined;
-        runWriteLane(fastForkKey);
+        // Hold the chip's working state through the whole write hand-off — for a
+        // signed-in non-owner that's the inline fork + navigation to the fork
+        // (Codex P2: releasing at fork-start unlocked the chips while forkingRef
+        // still swallowed re-taps, a dead window with no feedback).
+        await runWriteLane(fastForkKey);
         return false;
       })();
     },
