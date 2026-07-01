@@ -38,17 +38,24 @@ export default function PickathonPicker() {
   const { viewer, ViewerTag } = useViewer();
   // vibe-store is Fireproof when signed in and localStorage when logged out, with
   // the same put/del/useLiveQuery surface — so nothing below branches on auth.
-  const { database, useLiveQuery, useDocument } = useVibeStore("pickathon", { migrate: migratePickathonDoc });
+  const { database, useLiveQuery, useDocument, hasAuthedBefore } = useVibeStore("pickathon", {
+    migrate: migratePickathonDoc,
+  });
   const { can, ready } = useVibe("pickathon");
 
   const myHandle = viewer?.userHandle || "anonymous";
   const userId = myHandle;
   const signedIn = Boolean(viewer?.userHandle);
+  // A returning visitor who has signed in before but is currently logged out: their
+  // schedule lives on their account, so steer them to sign in rather than let them
+  // start a throwaway second anonymous session they'd never see again.
+  const returningLoggedOut = !signedIn && hasAuthedBefore;
 
-  // Everyone can favorite (logged-out writes land in localStorage and migrate on
-  // sign-in); notes/shifts/friends stay signed-in. Gate on the app's own access.js
-  // via useVibe().can — the same fn the server runs — for signed-in writes.
-  const canFavorite = !signedIn || (ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok));
+  // New logged-out visitors favorite anonymously (localStorage, migrated on sign-in);
+  // returning-logged-out visitors are blocked and prompted to sign in. Notes/shifts/
+  // friends stay signed-in. Gate signed-in writes on the app's own access.js via
+  // useVibe().can — the same fn the server runs.
+  const canFavorite = signedIn ? ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok) : !hasAuthedBefore;
   const canWrite = ready && signedIn && Boolean(can?.create?.({ type: "shift", userId })?.ok);
 
   const [events, setEvents] = useState([]);
@@ -443,32 +450,10 @@ export default function PickathonPicker() {
     </button>
   );
 
-  if (loading && events.length === 0) {
-    return (
-      <div className={`min-h-screen ${c.pageBg} p-4`}>
-        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} p-12`}>
-          <div className="flex items-center justify-center gap-4">
-            <div className={`w-16 h-16 m-2  rounded-full animate-spin `}></div>
-            <h2 className={`text-3xl font-black ${c.bodyText}`}>Loading Pickathon Schedule...</h2>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && events.length === 0) {
-    return (
-      <div className={`min-h-screen ${c.pageBg} p-4`}>
-        <div className={`max-w-4xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} p-12`}>
-          <h2 className={`text-3xl font-black mb-4 ${c.bodyText}`}>Error Loading Schedule</h2>
-          <p className={`text-lg ${c.bodyText} mb-4`}>{error}</p>
-          <button onClick={fetchSchedule} className={c.btnPink}>
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // The schedule feed loads behind the full UI: header + nav render immediately,
+  // and only the content area shows a loading/error state until events arrive.
+  const scheduleLoading = loading && events.length === 0;
+  const scheduleError = error && events.length === 0;
 
   const connectUrl = `https://vibes.diy/vibe/og/pickathon-picker/?friend=${encodeURIComponent(userId)}`;
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(connectUrl)}`;
@@ -476,7 +461,7 @@ export default function PickathonPicker() {
   return (
     <div className={`min-h-screen ${c.pageBg} p-4`}>
       <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} overflow-hidden`}>
-        <div className={`${c.headerBg} mx-2 mt-2 ${c.border} p-10 rounded-t-3xl`}>
+        <div className={`${c.headerBg} ${c.border} p-10`}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <a href="https://pickathon.com" target="_blank" rel="noopener noreferrer" className="shrink-0">
@@ -496,8 +481,12 @@ export default function PickathonPicker() {
           {error && error.includes("cached") && (
             <div className={`mt-2 ${c.pinkBg} text-white px-3 py-2 rounded-lg text-sm font-bold`}>{error}</div>
           )}
-          {!canWrite && (
-            <div className={c.readOnlyBanner}>Sign in via the Vibes DIY logo to share your schedule with friends.</div>
+          {!signedIn && (
+            <div className={c.readOnlyBanner}>
+              {returningLoggedOut
+                ? "Your saved schedule is on your account — sign in via the Vibes DIY logo to see it."
+                : "Sign in via the Vibes DIY logo to share your schedule with friends."}
+            </div>
           )}
         </div>
 
@@ -535,7 +524,22 @@ export default function PickathonPicker() {
         </div>
 
         <div className="p-6">
-          {view === "now" && (
+          {scheduleLoading ? (
+            <div className="flex items-center justify-center gap-4 py-16">
+              <div className="w-16 h-16 m-2 rounded-full border-4 border-current border-t-transparent animate-spin"></div>
+              <h2 className={`text-3xl font-black ${c.bodyText}`}>Loading the schedule...</h2>
+            </div>
+          ) : scheduleError ? (
+            <div className="py-16 text-center">
+              <h2 className={`text-3xl font-black mb-4 ${c.bodyText}`}>Couldn't load the schedule</h2>
+              <p className={`text-lg ${c.bodyText} mb-4`}>{error}</p>
+              <button onClick={fetchSchedule} className={c.btnPink}>
+                Retry
+              </button>
+            </div>
+          ) : (
+            <>
+              {view === "now" && (
             <NowView
               nowSets={nowSets}
               nextSets={nextSets}
@@ -672,6 +676,8 @@ export default function PickathonPicker() {
                 showGaps={true}
               />
             </div>
+          )}
+            </>
           )}
         </div>
       </div>
