@@ -4,22 +4,15 @@ export default function (doc, oldDoc, user, ctx) {
   const type = doc.type || (oldDoc && oldDoc.type);
   const ownerId = doc.userId != null ? doc.userId : oldDoc && oldDoc.userId;
 
-  if (type === "favorite") {
-    // Favorites are public and may be saved (or removed) by anyone, including
-    // logged-out visitors — an anon user owns theirs via a client-minted device
-    // id in doc.userId. Signed-in users must match their own handle; anonymous
-    // writes are opted in explicitly with allowAnonymous.
-    if (user && ownerId !== user.userHandle) throw { forbidden: "not owner" };
-    return {
-      channels: ["favorites"],
-      grant: { public: ["favorites"] },
-      allowAnonymous: true,
-    };
-  }
-
-  // Everything below (private notes, work shifts, friend links) needs a real
-  // account — these route to per-user channels only a signed-in handle can read.
+  // All writes need a real account. Logged-out favorites never reach Fireproof —
+  // they live in the browser's localStorage and are migrated in on first sign-in.
   if (!user) throw { forbidden: "authentication required" };
+
+  if (type === "favorite") {
+    if (ownerId !== user.userHandle) throw { forbidden: "not owner" };
+    // Public read so super mode can show global pick counts and peer picks.
+    return { channels: ["favorites"], grant: { public: ["favorites"] } };
+  }
 
   if (type === "note") {
     if (ownerId !== user.userHandle) throw { forbidden: "not owner" };
