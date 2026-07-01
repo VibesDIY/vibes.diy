@@ -35,5 +35,9 @@ export default function (doc, oldDoc, user, ctx) {
     };
   }
 
-  throw { forbidden: "unknown document type" };
+  // Unknown / legacy doc types (e.g. `geocode` docs from the old map): accept the
+  // write but route it to an unreadable channel — one with no grant, so nobody can
+  // read it back. Throwing here would surface as an error toast and, worse, fail the
+  // whole anonymousLocal migration on every load if a single stray doc slips through.
+  return { channels: ["discard"], grant: {} };
 }

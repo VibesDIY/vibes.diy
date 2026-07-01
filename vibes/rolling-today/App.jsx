@@ -21,6 +21,7 @@ import {
   byTypeUser,
   byTypeFriendSlug,
   migrateRollingDoc,
+  visibleFavsByRide,
   readFriendParam,
   clearFriendParamFromUrl,
   currentVibeBase,
@@ -67,17 +68,7 @@ export default function App() {
 
   // Favorites are public-read but only *shown* for you + your friends.
   const visibleSlugs = useMemo(() => new Set([userId, ...friendSlugs]), [userId, friendSlugs]);
-  const favsByRide = useMemo(() => {
-    const m = {};
-    for (const f of favorites) {
-      if (!f.rideId) continue;
-      const uid = f.userId || "anonymous";
-      if (!visibleSlugs.has(uid)) continue;
-      if (!m[f.rideId]) m[f.rideId] = [];
-      if (!m[f.rideId].some((x) => (x.userId || "anonymous") === uid)) m[f.rideId].push(f);
-    }
-    return m;
-  }, [favorites, visibleSlugs]);
+  const favsByRide = useMemo(() => visibleFavsByRide(favorites, visibleSlugs), [favorites, visibleSlugs]);
 
   const loadDate = useCallback(async (target, opts = {}) => {
     setError(null);
