@@ -9,6 +9,7 @@ import {
   addDays,
   prettyDate,
   pretty12,
+  rideKey,
   readDayCache,
   fetchDay,
   findNextRideDay,
@@ -171,7 +172,7 @@ export default function App() {
   const goToday = () => loadDate(today);
 
   const toggleFavorite = async (event) => {
-    const rideId = String(event.id);
+    const rideId = rideKey(event);
     const mine = (favsByRide[rideId] || []).find((f) => (f.userId || "anonymous") === userId);
     if (mine) {
       await database.del(mine._id);
@@ -180,6 +181,7 @@ export default function App() {
       // image — that view hides them) so it renders without refetching each day.
       const snap = {
         id: event.id,
+        caldaily_id: event.caldaily_id,
         date: event.date,
         time: event.time,
         endtime: event.endtime,
@@ -345,13 +347,13 @@ export default function App() {
             <div className={c.list}>
               {events.map((e) => (
                 <RideCard
-                  key={e.caldaily_id || e.id}
+                  key={rideKey(e)}
                   event={e}
-                  favs={favsByRide[String(e.id)] || []}
+                  favs={favsByRide[rideKey(e)] || []}
                   userId={userId}
                   canFavorite={canFavorite}
                   toggleFavorite={toggleFavorite}
-                  note={notes[String(e.id)]}
+                  note={notes[rideKey(e)]}
                   saveNote={saveNote}
                 />
               ))}

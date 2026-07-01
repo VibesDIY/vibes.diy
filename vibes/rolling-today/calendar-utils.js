@@ -24,6 +24,11 @@ export function prettyDate(s) {
   const d = parseYmd(s);
   return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
+// Stable per-occurrence key. The feed's `id` is the *series* id for recurring rides;
+// `caldaily_id` is the individual dated occurrence. Favorites/notes must key by the
+// occurrence, or favoriting one weekly ride would mark every date in the series.
+export const rideKey = (e) => String(e.caldaily_id != null ? e.caldaily_id : e.id);
+
 export function pretty12(hhmmss) {
   if (!hhmmss) return "";
   const [h, m] = hhmmss.split(":").map(Number);

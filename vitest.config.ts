@@ -24,6 +24,7 @@ export default defineConfig({
       "vibes-diy/vitest.config.ts",
       "eval/codegen-matrix/vitest.config.ts",
       "eval/codegen-agentic/vitest.config.ts",
+      "vibes/vitest.config.ts",
     ],
   },
 });

@@ -1,8 +1,14 @@
 export default function (doc, oldDoc, user, ctx) {
   // Deletes arrive as tombstones that may not carry the original fields, so read
-  // type/owner from oldDoc as a fallback.
+  // type from oldDoc as a fallback.
   const type = doc.type || (oldDoc && oldDoc.type);
-  const ownerId = doc.userId != null ? doc.userId : oldDoc && oldDoc.userId;
+
+  // Owner is authoritative from oldDoc whenever the doc already exists: on an
+  // update/delete we must NOT trust the incoming doc.userId. Otherwise an attacker
+  // could target a victim's _id (e.g. `favorite-victim-42`) while setting doc.userId
+  // to their own handle — the ownership check below would pass and let them overwrite
+  // or delete someone else's record. doc.userId is only trusted on true creates.
+  const ownerId = oldDoc ? oldDoc.userId : doc.userId;
 
   // Every write needs a real account. Logged-out favorites/notes never reach the
   // cloud — they live in localStorage and migrate in on first sign-in.

@@ -1,7 +1,7 @@
 import React from "react";
 import RideCard from "./RideCard.jsx";
 import { c } from "./styles.js";
-import { prettyDate } from "./calendar-utils.js";
+import { prettyDate, rideKey } from "./calendar-utils.js";
 
 // The all-days Favorites screen: every day you've saved a ride, oldest first,
 // empty days skipped, each day under its own header. Cards are condensed (no long
@@ -26,13 +26,13 @@ export default function FavoritesView({ favDates, favByDay, userId, favsByRide, 
             <div className={c.list}>
               {rides.map((event) => (
                 <RideCard
-                  key={event.id}
+                  key={rideKey(event)}
                   event={event}
-                  favs={favsByRide[String(event.id)] || []}
+                  favs={favsByRide[rideKey(event)] || []}
                   userId={userId}
                   canFavorite={canFavorite}
                   toggleFavorite={toggleFavorite}
-                  note={notes[String(event.id)]}
+                  note={notes[rideKey(event)]}
                   saveNote={saveNote}
                   condensed
                 />
