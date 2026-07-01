@@ -67,7 +67,7 @@
     "react-router-dom": "^7.18.0",
     "tailwind-merge": "^3.6.0",
     "use-vibes": "workspace:*",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.106.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.39.0",
