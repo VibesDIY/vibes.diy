@@ -19,6 +19,50 @@ A flake is a test that fails on `pnpm check` but passes on rerun (or in isolatio
 
 The issue exists so we can ignore known flakes during day-to-day work _and_ periodically batch-fix them with full context.
 
+## `cancelled` ≠ `failure`: superseded runs are very common
+
+A **very common** false alarm: a webhook reports `compile_test` (the required
+aggregation gate) as `failure`, but its logs show every upstream job concluded
+`cancelled`, not `failure`:
+
+```
+scope=cancelled checks=cancelled test=cancelled publish_build=cancelled
+##[error]required upstream job concluded 'cancelled' (expected success)
+##[error]the test matrix concluded 'cancelled'
+```
+
+This is **not a test failure**. It means the run was **superseded** — GitHub
+Actions `concurrency: cancel-in-progress` killed an in-flight run because a newer
+event landed on the same ref. It happens constantly on normal work: two events
+for one push (the `push` and the PR `synchronize`), a quick second push, or a
+push that overlaps the tail of the previous commit's run. The aggregation gate
+has no way to say "superseded", so it faithfully reports the cancelled upstreams
+as a red `failure`.
+
+**How to tell it apart from a real failure** — pull the failed job's logs and
+look at the upstream conclusions:
+
+- All `cancelled` (and often the `changes`/`scope` of a _sibling_ run show
+  `success`/`in_progress`) → **superseded**, not real. No code is wrong.
+- A specific shard `failure` with a `FAILED: <file> > <test>` line → real (or a
+  known flake per #1515); handle it on its merits.
+
+**What to do about a superseded run:** the fix is a fresh run on the current
+SHA, not a code change.
+
+- The GitHub MCP `rerun_workflow_run` / `rerun_failed_jobs` calls return
+  **403 "Resource not accessible by integration"** in cloud sessions — the token
+  lacks the actions:write scope, so you cannot re-run from here.
+- So **re-trigger with a push**: an empty commit
+  (`git commit --allow-empty`) or, better, fold it into whatever your next
+  substantive push is. Don't "fix" anything in the diff — there's nothing to fix.
+- If you have nothing to push and the branch is otherwise green, a superseded
+  required check will also clear the next time _any_ push lands, so it rarely
+  needs its own empty commit.
+
+Don't burn a debugging loop reading shard logs for a run whose upstreams are all
+`cancelled` — confirm the `cancelled` fingerprint once and move on.
+
 ## CI test gating switch (#2426)
 
 The `test` step in [`actions/base/action.yaml`](actions/base/action.yaml) used to end in `|| true` with a 120s `timeout`, so the ~240s suite was SIGKILLed mid-run and any failure was silently swallowed — `compile_test` was a "does the container start" check, not a test gate ([#2426](https://github.com/VibesDIY/vibes.diy/issues/2426)).
