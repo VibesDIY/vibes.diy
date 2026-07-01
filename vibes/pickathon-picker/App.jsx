@@ -164,8 +164,12 @@ export default function PickathonPicker() {
     return () => clearInterval(id);
   }, []);
 
-  // Mobile-first: lock the iframe viewport to device width and disable pinch-zoom
-  // so double-tapping a heart never accidentally zooms the page.
+  // Mobile-first: render at device width and stop the wide header art / long rows
+  // from inducing a *horizontal* scroll, via overflow-x:hidden (which leaves vertical
+  // scroll untouched). We deliberately do NOT set maximum-scale/user-scalable — that
+  // locked the visual viewport and also blocked vertical scrolling. Accidental
+  // double-tap zoom on a heart is instead handled by touch-action:manipulation on the
+  // root (see the outer div), which disables tap-zoom without affecting scroll/pinch.
   useEffect(() => {
     let meta = document.querySelector('meta[name="viewport"]');
     if (!meta) {
@@ -173,7 +177,13 @@ export default function PickathonPicker() {
       meta.name = "viewport";
       document.head.appendChild(meta);
     }
-    meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");
+    meta.setAttribute("content", "width=device-width, initial-scale=1");
+    const root = document.documentElement;
+    const prev = root.style.overflowX;
+    root.style.overflowX = "hidden";
+    return () => {
+      root.style.overflowX = prev;
+    };
   }, []);
 
   useEffect(() => {
@@ -570,7 +580,7 @@ export default function PickathonPicker() {
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(connectUrl)}`;
 
   return (
-    <div className={`min-h-screen ${c.pageBg}`}>
+    <div className={`min-h-screen ${c.pageBg}`} style={{ touchAction: "manipulation" }}>
       <div className={`max-w-6xl mx-auto ${c.cardBg} shadow-2xl ${c.border} overflow-hidden`}>
         <div className={`${c.headerBg} ${c.border} p-10 relative isolate`}>
           <svg
