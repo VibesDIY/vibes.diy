@@ -40,12 +40,25 @@ describe("resolveVibeModuleGraph", () => {
       entry(`import { Badge } from "./Badge.jsx"; export default function App(){ return <Badge/>; }`),
       resolverFrom({ "/Badge.jsx": `export function Badge(){ return <span>b</span>; }` })
     );
-    expect(graph.entryKey).toBe("App.js");
-    expect(Object.keys(graph.modules).sort()).toEqual(["App.js", "Badge.js"]);
-    expect(graph.modules["App.js"]).toContain(`"./Badge.js"`);
-    expect(graph.modules["App.js"]).not.toContain("Badge.jsx");
+    // Keys are namespaced under vibe-src/ so a vibe file can never collide with a
+    // reserved loader key (main.js / react / render-vibes). Relative specifiers
+    // between vibe modules stay relative (unchanged by the namespace).
+    expect(graph.entryKey).toBe("vibe-src/App.js");
+    expect(Object.keys(graph.modules).sort()).toEqual(["vibe-src/App.js", "vibe-src/Badge.js"]);
+    expect(graph.modules["vibe-src/App.js"]).toContain(`"./Badge.js"`);
+    expect(graph.modules["vibe-src/App.js"]).not.toContain("Badge.jsx");
     // bare specifiers stay bare (dep modules resolve them)
-    expect(graph.modules["App.js"]).toContain("react/jsx-runtime");
+    expect(graph.modules["vibe-src/App.js"]).toContain("react/jsx-runtime");
+  });
+
+  it("namespaces reserved names — a sibling `/main.jsx` never clobbers the loader bootstrap (Charlie Slice-2 review)", async () => {
+    const graph = await resolveVibeModuleGraph(
+      entry(`import { m } from "./main.jsx"; export default () => <b>{m}</b>;`),
+      resolverFrom({ "/main.jsx": `export const m = "not-the-bootstrap";` })
+    );
+    // The sibling keys as vibe-src/main.js, NOT the reserved main.js.
+    expect(Object.keys(graph.modules)).toContain("vibe-src/main.js");
+    expect(Object.keys(graph.modules)).not.toContain("main.js");
   });
 
   it("walks a transitive, nested graph and rewrites `../` correctly", async () => {
@@ -56,11 +69,11 @@ describe("resolveVibeModuleGraph", () => {
         "/lib/k.js": `export const k = () => 1;`,
       })
     );
-    expect(Object.keys(graph.modules).sort()).toEqual(["App.js", "lib/k.js", "lib/util.js"]);
-    // App.js (root) → lib/util.js
-    expect(graph.modules["App.js"]).toContain(`"./lib/util.js"`);
+    expect(Object.keys(graph.modules).sort()).toEqual(["vibe-src/App.js", "vibe-src/lib/k.js", "vibe-src/lib/util.js"]);
+    // App.js (namespace root) → lib/util.js
+    expect(graph.modules["vibe-src/App.js"]).toContain(`"./lib/util.js"`);
     // lib/util.js → ../lib/k.js resolves to lib/k.js; from dir `lib`, that is `./k.js`
-    expect(graph.modules["lib/util.js"]).toContain(`"./k.js"`);
+    expect(graph.modules["vibe-src/lib/util.js"]).toContain(`"./k.js"`);
   });
 
   it("dedupes a diamond (two modules importing the same leaf)", async () => {
@@ -72,7 +85,7 @@ describe("resolveVibeModuleGraph", () => {
         "/shared.js": `export const s = 3;`,
       })
     );
-    expect(Object.keys(graph.modules).sort()).toEqual(["App.js", "a.js", "b.js", "shared.js"]);
+    expect(Object.keys(graph.modules).sort()).toEqual(["vibe-src/App.js", "vibe-src/a.js", "vibe-src/b.js", "vibe-src/shared.js"]);
   });
 
   it("throws on an unresolvable relative import (caller falls back to client-only)", async () => {

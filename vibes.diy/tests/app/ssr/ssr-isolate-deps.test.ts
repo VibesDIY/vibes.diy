@@ -179,6 +179,15 @@ describe("multi-file vibe SSR (#2845 cb6)", () => {
     expect(html).toContain("<span>sibling-badge</span>");
   });
 
+  it("a sibling named `main` does not clobber the loader bootstrap — still renders (Charlie Slice-2 review)", async () => {
+    const html = await ssrRenderMultiFile(
+      `import { tag } from "./main.jsx"; export default function App(){ return <main>{tag}</main>; }`,
+      { "/main.jsx": `export const tag = "sibling-main-ok";` },
+      { usrEnv: {} }
+    );
+    expect(html).toContain("<main>sibling-main-ok</main>");
+  });
+
   it("renders a transitive, nested graph (entry → lib/util → lib/k) sharing one React", async () => {
     const html = await ssrRenderMultiFile(
       `import { label } from "./lib/util.js"; import { useState } from "react"; export default function App(){ const [n]=useState(40); return <main>{label(n)}</main>; }`,
