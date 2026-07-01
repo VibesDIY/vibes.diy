@@ -668,6 +668,7 @@ export default function PickathonPicker() {
               selectedDay={selectedDay}
               setSelectedDay={setSelectedDay}
               displayDays={displayDays}
+              getDateForDay={getDateForDay}
               myFavIds={myFavIds}
               canWrite={canWrite}
               canFavorite={canFavorite}
