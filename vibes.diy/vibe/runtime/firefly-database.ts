@@ -73,13 +73,6 @@ function encodeKey(v: unknown): string {
   }
 }
 
-// Client-generated document ids for optimistic writes. A fixed-width hex
-// timestamp keeps lexical order == chronological (matching the server's
-// time-ordered ids, so `allDocs` sorted by `_id` stays in creation order),
-// and a random suffix avoids cross-client collisions when the id is minted
-// on the client instead of the server. Only used on the optimistic path for
-// a brand-new doc (no `_id`); with optimism off the server still mints ids.
-let optimisticIdCounter = 0;
 function randomHex(bytes: number): string {
   const g = (globalThis as { crypto?: Crypto }).crypto;
   if (g?.getRandomValues) {
@@ -94,9 +87,26 @@ function randomHex(bytes: number): string {
       .padStart(2, "0");
   return s;
 }
-function newOptimisticId(): string {
-  const t = Date.now().toString(16).padStart(12, "0");
-  return `${t}-${randomHex(6)}-${(optimisticIdCounter++).toString(16)}`;
+
+/**
+ * Client-minted document id for an optimistic new doc (#2985). Only used on the
+ * optimistic path for a brand-new doc (no `_id`); with optimism off the server
+ * still mints the id.
+ *
+ * Matches the server's `timeOrderedNextId` 8-4-4-4-12 UUIDv7 layout
+ * (identity/runtime/superthis.ts) EXACTLY — same 48-bit ms-timestamp prefix and
+ * the same delimiter placement (first `-` after 8 timestamp-hex chars). This
+ * matters for ordering: with a different layout, `-` (0x2d) sorts before hex
+ * digits, so a server-minted id could sort *before* a later client-minted id in
+ * `allDocs()` whenever the high 8 timestamp chars match (a ~65s window). Keeping
+ * the layout identical makes `_id` lexical order monotonic across both id
+ * families. The 80-bit random tail avoids cross-client collisions. `now` is
+ * injectable for tests.
+ */
+export function newOptimisticId(now: number = Date.now()): string {
+  const t = (0x1000000000000 + now).toString(16).replace(/^1/, "");
+  const hex = randomHex(10);
+  return `${t.slice(0, 8)}-${t.slice(8)}-7${hex.slice(0, 3)}-${hex.slice(3, 7)}-${hex.slice(7, 19)}`;
 }
 
 // Types matching the use-fireproof Database interface.
@@ -274,6 +284,15 @@ export class FireflyDatabase {
   /**
    * Toggle the optimistic-write layer for this database (#2985). Called by
    * useFireproof from the { optimistic } option; on by default.
+   *
+   * Note: FireflyDatabase instances are cached per db name and shared between
+   * useFireproof() and the standalone fireproof() factory, so this is a
+   * process-wide-per-db, last-writer-wins setting. A raw fireproof(name) handle
+   * in a runtime where useFireproof(name) has mounted inherits the hook's mode
+   * (i.e. optimism on). That's intentional — optimism is a property of the db,
+   * not the call site — but callers that need the raw single-notification
+   * semantics should pass useFireproof(name, { optimistic: false }) or avoid
+   * mixing the two APIs on the same db name.
    */
   setOptimistic(enabled: boolean): void {
     this.optimisticEnabled = enabled;

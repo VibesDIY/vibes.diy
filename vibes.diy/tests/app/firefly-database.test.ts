@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
+import { FireflyDatabase, newOptimisticId } from "../../vibe/runtime/firefly-database.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
 let mockApi: MockVibeApi;
@@ -686,6 +686,25 @@ describe("FireflyDatabase optimistic writes (#2985)", () => {
     expect(res.id.length).toBeGreaterThan(0);
     // Server stored the doc under exactly the client-minted id (no mismatch).
     expect(mock._docs.has(res.id)).toBe(true);
+  });
+
+  it("newOptimisticId matches the server 8-4-4-4-12 layout and stays sort-compatible", () => {
+    // Mirrors the server helper (identity/runtime/superthis.ts timeOrderedNextId).
+    const serverId = (now: number) => {
+      const t = (0x1000000000000 + now).toString(16).replace(/^1/, "");
+      return `${t.slice(0, 8)}-${t.slice(8)}-7000-0000-000000000000`;
+    };
+
+    expect(newOptimisticId(1_700_000_000_000)).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+
+    // The bug: a different delimiter position let `-` (0x2d) sort before hex,
+    // inverting chronological order across id families. With the layouts equal,
+    // lexical order follows the timestamp regardless of which side minted it.
+    const base = 1_700_000_000_000;
+    expect(serverId(base) < newOptimisticId(base + 30_000)).toBe(true); // earlier server < later client
+    expect(newOptimisticId(base) < serverId(base + 30_000)).toBe(true); // earlier client < later server
+    // A client id is monotonic with its own timestamp too.
+    expect(newOptimisticId(base) < newOptimisticId(base + 1)).toBe(true);
   });
 
   it("get() serves a pending put and reports a pending delete as not-found", async () => {
