@@ -7,7 +7,7 @@
 import { Lazy, Result } from "@adviser/cement";
 import type { SuperThis } from "./types/sthis.js";
 import type { FPDeviceIDSession } from "./types/device-id-payload.js";
-import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import type { DashAuthType } from "./dash-api/protocols-dashboard/index.js";
 import { getKeyBag } from "./keybag/keybag.js";
 import { DeviceIdKey } from "./device-id/key.js";
 import { DeviceIdSignMsg } from "./device-id/sign.js";

@@ -7,10 +7,11 @@
 //
 // It is a pure HTTP client — it never decodes a JWT or parses claims through a
 // strict schema, so it carries none of the Task-5 strict-decode bug class. Only
-// imports were adjusted: the request/response wire-types stay type-only from
-// `@fireproof/core-types-protocols-dashboard` (Bucket B, kept), and `clerkDashApi`
-// takes the real `LoadedClerk` from `@clerk/shared/types` (the exact type
-// `@clerk/react`'s `useClerk()` returns), so the sole consumer
+// imports were adjusted: the request/response wire-types are now type-only from
+// the owned dashboard barrel (`./protocols-dashboard/index.js`, vendored verbatim
+// for #2935 — the last `@fireproof/*` declaration in the workspace), and
+// `clerkDashApi` takes the real `LoadedClerk` from `@clerk/shared/types` (the
+// exact type `@clerk/react`'s `useClerk()` returns), so the sole consumer
 // (`use-vibes/.../VibeContext.tsx`) passes `clerk` directly with no cast.
 import { Result, KeyedResolvOnce, WaitingForValue, Option, exception2Result } from "@adviser/cement";
 import type {
@@ -59,7 +60,7 @@ import type {
   FPApiInterface,
   DashboardApiConfig,
   WithoutTypeAndAuth,
-} from "@fireproof/core-types-protocols-dashboard";
+} from "./protocols-dashboard/index.js";
 import type { LoadedClerk, GetTokenOptions } from "@clerk/shared/types";
 
 export class DashboardApiImpl<T> implements FPApiInterface {

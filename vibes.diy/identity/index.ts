@@ -35,12 +35,12 @@ export type {
   FPApiToken,
 } from "./types/wire.js";
 
-// VerifiedResult pulls the User type graph and stays upstream-sourced (the
-// `core-types-protocols-dashboard` types are out of scope for #2937). Everything
-// else — the SuperThis context, the JWK / cert / session types, the keybag item
-// types, and the device-id CA interface — is now OWNED in-repo (#2937), so the
+// VerifiedResult (and its User type graph) is now OWNED in-repo via the vendored
+// dashboard barrel (#2935 — the last `@fireproof/*` declaration removed). The
+// SuperThis context, the JWK / cert / session types, the keybag item types, and
+// the device-id CA interface were already owned in-repo (#2937), so identity's
 // device-id/keybag crypto and its base types no longer touch `@fireproof/core-*`.
-export type { VerifiedResult } from "@fireproof/core-types-protocols-dashboard";
+export type { VerifiedResult } from "./dash-api/protocols-dashboard/index.js";
 export type { SuperThis, DocTypes } from "./types/sthis.js";
 export type { JWKPrivate, JWKPublic } from "./types/wire.js";
 export type { FPDeviceIDSession } from "./types/device-id-payload.js";
