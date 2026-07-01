@@ -26,7 +26,7 @@
     "@vibes.diy/vibe-types": "workspace:*",
     "arktype": "^2.2.1",
     "charwise": "^3.0.1",
-    "es-module-lexer": "^1.7.0",
+    "es-module-lexer": "^2.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "sucrase": "^3.35.1"
