@@ -34,7 +34,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 ### Ship & operate
 
 - [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal, the autonomous merge loop (hold for Charlie → green → merge → continue → blog post) and its hold-for-human-deploy exception (schema/DO/bindings/risky, any size), closing fixed issues on merge (auto-close is unreliable here)
-- [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
+- [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook; one-click ship via `workflow_dispatch` on `ship-fanout.yaml` (auto-versions from the tag streams; triggerable from the GitHub app or MCP `actions_run_trigger` — still requires an explicit human "ship it" in the same exchange)
 - [cli-then-prod.md](agents/cli-then-prod.md) — Stage risky ships on the CLI env, verify, then promote to prod (uses the deploy-tags conventions)
 - [do-migrations.md](agents/do-migrations.md) — Wrangler DO migrations are append-only history, not desired state; how to add/delete DO classes without bricking a worker
 - [wrangler-tail.md](agents/wrangler-tail.md) — Live-tailing workers: names by environment and invocation
