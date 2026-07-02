@@ -16,8 +16,11 @@ Reworked from the original `jchris/spelling-hive`:
 - **Only the board is public.** A signed-in player's best single-puzzle score
   (score + handle, never the word list) upserts into the `scores` database.
 - **Daily prune.** `backend.js` ticks hourly (platform interval caps at 1h) and
-  once a day prunes `scores` to the top 50 via `ctx.db.query` → `delete` —
-  the backend read lane added for exactly this.
+  prunes `scores` to the top 50 on the ~04:00 UTC tick via `ctx.db.query` →
+  `delete` — the backend read lane added for exactly this. The daily gate is
+  clock-derived (a forged `prune-meta` doc can't suppress it), and the sweep
+  multi-passes past the 2000-doc query cap so the kept set converges on the
+  GLOBAL top 50.
 
 Deploys to **jchris/spelling-hive** (the original app, improved in place):
 
