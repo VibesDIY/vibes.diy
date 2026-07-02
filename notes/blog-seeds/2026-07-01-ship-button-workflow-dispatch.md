@@ -33,5 +33,9 @@ The interesting bits for a post:
   runs under `always()`, so on dispatch runs it would start anyway, see gate skipped, and
   fail closed — a red X on every successful dispatch. Any job with `always()` needs its
   own event guard when a workflow grows a second trigger.
-- Racing double-taps are handled by the existing per-ref concurrency group: the second
-  dispatch queues, then recomputes its version after the first's tag exists.
+- **Serialized ≠ idempotent.** First cut relied on the per-ref concurrency group for
+  double-tap safety — but serializing two dispatches just means the second politely waits,
+  auto-bumps past the winner's tag, and ships the *same commit again* under a new version.
+  Codex's review caught it. The fix is a semantic guard, not a lock: auto mode refuses when
+  main HEAD already carries a ship/deploy tag ("already shipped — nothing new to ship");
+  an explicit version input stays as the deliberate re-ship escape hatch.

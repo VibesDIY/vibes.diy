@@ -111,6 +111,19 @@ jobs:
               exit 1
             fi
           else
+            # Idempotency guard (auto mode only): if this exact commit already
+            # carries a ship@ or child deploy tag, a second click must NOT
+            # re-ship it under a bumped number — that's the phone double-tap
+            # case. The concurrency group only serializes dispatches; without
+            # this check the loser would happily auto-bump past the winner's
+            # tag and ship the same SHA twice. An explicit version input is
+            # the deliberate way to re-ship a commit.
+            EXISTING=$(git tag --points-at "$SHIP_SHA" 'ship@*' 'vibes-diy@p*' 'vibes-diy@c*' 'pkg@p*' | paste -sd' ' -)
+            if [ -n "$EXISTING" ]; then
+              echo "::error::main HEAD $SHIP_SHA is already shipped ($EXISTING) — nothing new to ship. Pass an explicit version input to deliberately re-ship this commit."
+              exit 1
+            fi
+
             # Auto-version: next patch after the highest bare-semver version
             # across all four streams — the align-versions-across-streams rule
             # from agents/deploy-tags.md. Prerelease-style tags (pkg@p*-dev.N
