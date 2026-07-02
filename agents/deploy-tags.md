@@ -111,7 +111,7 @@ Caveats:
 - **Phone / GitHub UI:** Actions → "ship fan-out" → Run workflow → branch `main` → leave version empty → Run. One tap.
 - **Agent session:** GitHub MCP `actions_run_trigger` on `ship-fanout.yaml` with `ref: main` (optionally `inputs: {version: "X.Y.Z"}`). The confirm-before-prod rule applies unchanged — dispatching this IS a prod+cli+npm deploy, so only do it on an explicit human "ship it" in the same exchange.
 
-**Reading the runs:** the dispatch run going green means only "tag created" — the subsequent `ship@<ver>` push run is the actual ship; watch that one for the deploy result (`gh run list --branch 'ship@<ver>'`). Two dispatches racing is safe: the workflow's concurrency group serializes them and the second recomputes its version after the first's tag exists.
+**Reading the runs:** the dispatch run going green means only "tag created" — the subsequent `ship@<ver>` push run is the actual ship; watch that one for the deploy result (`gh run list --branch 'ship@<ver>'`). Double-dispatch is idempotent in auto mode: the concurrency group serializes the two runs, and the second fails fast with "already shipped" because main HEAD already carries a ship/deploy tag — it will not auto-bump and ship the same commit twice. Re-shipping the same SHA on purpose requires an explicit `version` input (per Codex review on #3031).
 
 The pre-`workflow_dispatch` manual path still works: create `ship@<ver>` via the GitHub **Releases** UI (target `main`), or an annotated tag from any git checkout, and all three deploys go.
 
