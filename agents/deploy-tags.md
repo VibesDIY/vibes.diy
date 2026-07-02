@@ -100,7 +100,20 @@ Caveats:
 - **Only the `ship@` path dedups.** Hand-cutting `vibes-diy@p` + `vibes-diy@c` at the same commit still double-tests, because neither's `compile_test` check has landed when the other starts. Prefer `ship@`.
 - All the existing fan-out validations (semver, on-main, child-tag immutability) now run **up front in the `gate` job**, so an invalid `ship@` tag fails before spending the suite — not after.
 
-This is the easiest path from a phone: create `ship@<ver>` once via the GitHub **Releases** UI (target `main`), and all three deploys go.
+### One-click ship via `workflow_dispatch` (no git, no device)
+
+`ship-fanout.yaml` also has a `workflow_dispatch` trigger — the ship button. Dispatching it (from `main`) runs a single `dispatch_ship` job that resolves the version, creates the annotated `ship@<ver>` tag at main HEAD, and pushes it with `DEPLOY_TAG_PAT` — which fires this same workflow's normal push path as a **separate run** with every validation (semver, on-main, child-tag immutability, test-once) intact.
+
+**Version resolution:** the `version` input is optional. Leave it empty and the job auto-bumps: it takes the highest bare-semver version across all four streams (`ship@*`, `vibes-diy@p*`, `vibes-diy@c*`, `pkg@p*`) and increments the patch — the "align the version number across streams" rule, automated. Pass an explicit `X.Y.Z` only when you want to skip ahead (e.g. a minor bump). Prerelease tags (`pkg@d*-dev.N`) never influence the auto-version.
+
+**How to trigger:**
+
+- **Phone / GitHub UI:** Actions → "ship fan-out" → Run workflow → branch `main` → leave version empty → Run. One tap.
+- **Agent session:** GitHub MCP `actions_run_trigger` on `ship-fanout.yaml` with `ref: main` (optionally `inputs: {version: "X.Y.Z"}`). The confirm-before-prod rule applies unchanged — dispatching this IS a prod+cli+npm deploy, so only do it on an explicit human "ship it" in the same exchange.
+
+**Reading the runs:** the dispatch run going green means only "tag created" — the subsequent `ship@<ver>` push run is the actual ship; watch that one for the deploy result (`gh run list --branch 'ship@<ver>'`). Two dispatches racing is safe: the workflow's concurrency group serializes them and the second recomputes its version after the first's tag exists.
+
+The pre-`workflow_dispatch` manual path still works: create `ship@<ver>` via the GitHub **Releases** UI (target `main`), or an annotated tag from any git checkout, and all three deploys go.
 
 **From the CLI, the tag must be annotated — pass `-m`.** This repo's git config forces annotated tags, so a bare `git tag ship@<ver> <sha>` fails with `fatal: no tag message?` and the subsequent `git push` then errors with `src refspec ... does not match any` (the tag was never created). Always create it as `git tag -a ship@<ver> <sha> -m "ship <ver>: fan-out to prod + cli + pkg"`, then `git push origin ship@<ver>`. Same rule applies to the per-stream `vibes-diy@p*` / `vibes-diy@c*` / `pkg@p*` tags.
 

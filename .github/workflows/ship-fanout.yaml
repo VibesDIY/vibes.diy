@@ -31,11 +31,26 @@ name: ship fan-out
 # GITHUB_TOKEN, so a GITHUB_TOKEN push would create the tags but never trigger
 # the deploys. The PAT must be a fine-grained token with Contents: read/write on
 # this repo. See agents/deploy-tags.md § ship@ one-tag fan-out.
+#
+# workflow_dispatch is the one-click ship button (GitHub app → Actions → Run
+# workflow, or an agent via the GitHub MCP actions_run_trigger). It runs ONLY
+# the dispatch_ship job: resolve the version (auto next-patch across the
+# ship/prod streams unless overridden), create ship@<ver> at main HEAD, push it
+# with the PAT. That tag push then fires this same workflow's push path — the
+# run that actually tests and fans out — with every validation intact. The
+# dispatch run going green means "tag created", not "shipped"; watch the
+# subsequent ship@<ver> run for the deploy.
 
 on:
   push:
     tags:
       - 'ship@*'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to ship (X.Y.Z). Leave empty to auto-bump: next patch after the highest version across ship@ / vibes-diy@p / vibes-diy@c / pkg@p.'
+        required: false
 
 # Process ship@ tags one at a time; never cancel an in-flight fan-out.
 concurrency:
@@ -43,14 +58,111 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # workflow_dispatch mode: the single-click ship button. Resolves the version,
+  # creates the annotated ship@ tag at main HEAD, and pushes it — which fires
+  # this workflow's push path (gate → tests → fanout) as a separate run with
+  # every validation intact. This job deploys NOTHING itself. Pushing with
+  # DEPLOY_TAG_PAT is load-bearing: a GITHUB_TOKEN push would create the tag
+  # but never trigger the push run (GitHub suppresses workflow events from
+  # GITHUB_TOKEN), silently shipping nothing.
+  dispatch_ship:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Require deploy PAT
+        env:
+          PAT: ${{ secrets.DEPLOY_TAG_PAT }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "::error::DEPLOY_TAG_PAT is not set. A ship@ tag pushed with GITHUB_TOKEN does NOT trigger this workflow's push run, so nothing would deploy. Add a fine-grained PAT (Contents: read/write on this repo) as the DEPLOY_TAG_PAT secret."
+            exit 1
+          fi
+
+      - name: Require main
+        if: ${{ github.ref != 'refs/heads/main' }}
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          echo "::error::ship dispatch must run from main (got $REF). Pick 'main' in the 'Use workflow from' selector."
+          exit 1
+
+      - name: Checkout main HEAD
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+          token: ${{ secrets.DEPLOY_TAG_PAT }}
+          persist-credentials: true
+
+      - name: Resolve version, create and push ship tag
+        env:
+          INPUT_VER: ${{ inputs.version }}
+          SHIP_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$INPUT_VER" ]; then
+            VER="$INPUT_VER"
+            if [[ ! "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::version '$VER' is not bare semver (expected X.Y.Z)"
+              exit 1
+            fi
+          else
+            # Auto-version: next patch after the highest bare-semver version
+            # across all four streams — the align-versions-across-streams rule
+            # from agents/deploy-tags.md. Prerelease-style tags (pkg@p*-dev.N
+            # etc.) are filtered out by the bare-semver grep.
+            LATEST=$(git tag -l 'ship@*' 'vibes-diy@p*' 'vibes-diy@c*' 'pkg@p*' \
+              | sed -E 's/^(ship@|vibes-diy@[pc]|pkg@p)//' \
+              | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -uV | tail -1)
+            if [ -z "$LATEST" ]; then
+              echo "::error::no existing ship/deploy tag found to bump — pass an explicit version input"
+              exit 1
+            fi
+            VER="${LATEST%.*}.$(( ${LATEST##*.} + 1 ))"
+            echo "auto-version: highest across streams is $LATEST — shipping $VER"
+          fi
+
+          # Fail fast on collisions. The push run's gate re-validates all of
+          # this, but catching it here avoids polluting the immutable tag
+          # namespace with a ship@ tag that can never fan out.
+          for t in "ship@$VER" "vibes-diy@p$VER" "vibes-diy@c$VER" "pkg@p$VER"; do
+            if git rev-parse -q --verify "refs/tags/$t" >/dev/null; then
+              echo "::error::tag $t already exists — tags are immutable; pass a higher version input"
+              exit 1
+            fi
+          done
+
+          git config user.name  "vibes-ship-bot"
+          git config user.email "vibes-ship-bot@users.noreply.github.com"
+          git tag -a "ship@$VER" "$SHIP_SHA" -m "ship $VER: fan-out to prod + cli + pkg (workflow_dispatch)"
+          git push origin "ship@$VER"
+
+          {
+            echo "### ship@$VER created :label:"
+            echo ""
+            echo "Tagged main HEAD \`$SHIP_SHA\` as \`ship@$VER\` and pushed it."
+            echo ""
+            echo "This dispatch run only creates the tag. The \`ship@$VER\` push run of this"
+            echo "workflow is the actual ship: it compile-tests once, then fans out"
+            echo "\`vibes-diy@p$VER\` + \`vibes-diy@c$VER\` + \`pkg@p$VER\`. Watch that run for green."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # Front-load every validation here so we never spend the test suite on an
   # invalid ship tag, and look up whether this SHA is already green (the same
   # skip-tests-if-green optimization vibes-diy-deploy's gate uses, hoisted so a
   # green SHA skips the whole matrix). Everything chains off this job, so the
   # `!github.event.deleted` guard (a `git push --delete ship@x.y.z` also fires
-  # this push event, with no commit to deploy) cascades to the whole run.
+  # this push event, with no commit to deploy) cascades to the whole run. The
+  # event_name guard keeps the push path off dispatch runs (dispatch_ship above
+  # handles those; without the guard, gate would try to parse a version out of
+  # `refs/heads/main` and fail).
   gate:
-    if: ${{ !github.event.deleted }}
+    if: ${{ github.event_name == 'push' && !github.event.deleted }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -168,9 +280,11 @@ jobs:
   # the SHA was already green OR checks + every test shard passed; fails the
   # fan-out otherwise (a red suite can never reach the tag push). Mirrors
   # vibes-diy-deploy.yaml's `compile_test`.
+  # The event_name guard matters because of always(): without it, a dispatch
+  # run (where gate is skipped) would still start this job and fail closed.
   compile_test:
     needs: [gate, checks, test]
-    if: ${{ always() && !github.event.deleted }}
+    if: ${{ always() && github.event_name == 'push' && !github.event.deleted }}
     runs-on: ubuntu-latest
     steps:
       - name: gate
