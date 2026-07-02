@@ -106,6 +106,7 @@ describe("UnifiedVibeCard", () => {
   it("fires nav callbacks and closes via the toggle", () => {
     const onHome = vi.fn();
     const onShare = vi.fn();
+    const onAbout = vi.fn();
     const onOpenChange = vi.fn();
     render(
       <UnifiedVibeCard
@@ -114,6 +115,7 @@ describe("UnifiedVibeCard", () => {
         handleSlug="meghan"
         onHome={onHome}
         onShare={onShare}
+        onAbout={onAbout}
         onOpenChange={onOpenChange}
       />
     );
@@ -121,6 +123,8 @@ describe("UnifiedVibeCard", () => {
     expect(onHome).toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: /share/i }));
     expect(onShare).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /about vibes diy/i }));
+    expect(onAbout).toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: /close vibe menu/i }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
