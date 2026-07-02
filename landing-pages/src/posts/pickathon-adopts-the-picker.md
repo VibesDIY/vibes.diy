@@ -72,12 +72,10 @@ reads**:
 - Every visitor reads that one synced record. Zero client-side cross-origin calls, and
   your API gets hit on a schedule instead of per-pageview.
 
-On Vibes DIY this is the natural job for a vibe's [`backend.js`](https://good.vibes.diy/blog/backend-js-server-side-vibes.html)
-— a scheduled handler that writes to the app database as the owner. To be straight with
-you: server-side **external egress** from `backend.js` is the piece rolling out right now
-(today's backends run on-timer and answer webhooks, with outbound fetch landing next), so
-this is the architecture to design toward. The principle holds regardless of platform:
-**fetch on a schedule, cache a singleton, never proxy per request.**
+On Vibes DIY this is the natural job for a vibe's [`backend.js`](https://good.vibes.diy/blog/backend-js-server-side-vibes.html):
+a scheduled handler fetches the feed server-side — no browser, no CORS — and writes it to
+the app database as the owner, one record every client reads. The principle holds
+regardless of platform: **fetch on a schedule, cache a singleton, never proxy per request.**
 
 ## The takeaway
 
