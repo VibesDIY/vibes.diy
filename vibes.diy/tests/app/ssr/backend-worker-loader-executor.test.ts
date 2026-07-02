@@ -115,7 +115,7 @@ describe("buildBackendWorkerCode", () => {
 
   it("embeds the binding-schema version so it participates in the content hash (Charlie watch-out)", () => {
     const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
-    expect(main).toMatch(/bindings=v1/);
+    expect(main).toMatch(/bindings=v2/); // v2: ctx.db.query added
   });
 
   it("ctx.db.put/delete require a db and post a typed op with the nonce (unforgeable)", () => {

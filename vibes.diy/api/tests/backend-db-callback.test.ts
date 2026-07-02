@@ -35,6 +35,7 @@ interface Recorder {
 describe("makeBackendDbCallback (#2856 B6)", { timeout: 30000 }, () => {
   const recorder: Recorder = { result: { channels: ["x"], grant: { public: ["x"] } } };
   let vibesCtx: VibesApiSQLCtx;
+  let ownerApi: VibesDiyApi;
   let ownerHandle: string;
   let appSlug: string;
   const posted: MsgBase[] = [];
@@ -58,7 +59,7 @@ describe("makeBackendDbCallback (#2856 B6)", { timeout: 30000 }, () => {
     };
 
     const user = await createTestUser({ sthis, deviceCA, session: "be-db-cb", seqUserId: 1 }); // → OWNER_USER_ID
-    const ownerApi = new VibesDiyApi({
+    ownerApi = new VibesDiyApi({
       apiUrl: "http://localhost:8787/api",
       ws: wsPair.p1 as unknown as WebSocket,
       timeoutMs: 10000,
@@ -158,5 +159,57 @@ describe("makeBackendDbCallback (#2856 B6)", { timeout: 30000 }, () => {
     // generation 2 write ⇒ onChange at depth 3 (originDepth + 1).
     expect((onChange.payload as { depth?: number }).depth).toBe(3);
     expect((onChange.payload as { writerUserId?: string | null }).writerUserId).toBeTruthy();
+  });
+
+  // ── ctx.db.query — the backend read lane ────────────────────────────────────
+
+  it("query denies an access-fn-bound db (no channel-filter bypass)", async () => {
+    const db = await ownerCallback();
+    const res = await db({ kind: "query", db: "grants" });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toContain("access-fn-bound");
+  });
+
+  it("query denies an anonymous identity", async () => {
+    const db = makeBackendDbCallback(vibesCtx, {
+      ownerHandle,
+      appSlug,
+      identity: { userId: null, userContext: null },
+      originDepth: 0,
+    });
+    const res = await db({ kind: "query", db: "anything" });
+    expect(res).toEqual({ ok: false, error: "Access denied", code: "access-denied" });
+  });
+
+  it("query returns the latest non-deleted docs (with _id) on a plain-ACL db", async () => {
+    // A second app WITHOUT an access.js — every db stays on the plain default ACL.
+    const r = await ownerApi.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+    });
+    const res = r.Ok();
+    if (!isResEnsureAppSlugOk(res)) assert.fail("Failed to create plain app");
+
+    const identity = await resolveOwnerWriteIdentity(vibesCtx, { ownerHandle: res.ownerHandle, appSlug: res.appSlug });
+    const db = makeBackendDbCallback(vibesCtx, {
+      ownerHandle: res.ownerHandle,
+      appSlug: res.appSlug,
+      identity,
+      originDepth: 0,
+    });
+
+    await db({ kind: "put", db: "scores", doc: { _id: "s1", kind: "highscore", score: 10 }, docId: "s1" });
+    await db({ kind: "put", db: "scores", doc: { _id: "s2", kind: "highscore", score: 20 }, docId: "s2" });
+    await db({ kind: "put", db: "scores", doc: { _id: "s2", kind: "highscore", score: 25 }, docId: "s2" }); // newer rev wins
+    await db({ kind: "put", db: "scores", doc: { _id: "s3", kind: "highscore", score: 5 }, docId: "s3" });
+    await db({ kind: "delete", db: "scores", docId: "s3" }); // tombstoned → excluded
+
+    const q = await db({ kind: "query", db: "scores" });
+    assert(q.ok && "docs" in q, "expected a docs result");
+    const byId = new Map(q.docs.map((d) => [d._id, d]));
+    expect(byId.size).toBe(2);
+    expect(byId.get("s1")).toMatchObject({ kind: "highscore", score: 10 });
+    expect(byId.get("s2")).toMatchObject({ kind: "highscore", score: 25 });
+    expect(byId.has("s3")).toBe(false);
   });
 });

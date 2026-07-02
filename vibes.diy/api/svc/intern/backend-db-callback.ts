@@ -103,12 +103,79 @@ export function makeBackendDbCallback(vctx: VibesApiSQLCtx, base: BackendDbCallb
     if (op.kind === "put") {
       return handleBackendPut(vctx, base, op);
     }
+    if (op.kind === "query") {
+      return handleBackendQuery(vctx, base, op);
+    }
     return handleBackendDelete(vctx, base, op);
   };
 }
 
 function deny(message: string, code?: string): BackendDbResult {
   return { ok: false, error: message, code };
+}
+
+// Hard cap on a backend query result. The docs cross the isolate boundary as one
+// JSON body; a runaway db must not OOM the DO or the isolate. Sorted by docId for
+// determinism before the cap is applied, so a capped read is at least stable.
+const BACKEND_QUERY_MAX_DOCS = 2000;
+
+/**
+ * `ctx.db.query` — the backend read lane. Returns the db's latest non-deleted
+ * revisions (`_id` included), gated by the SAME front-door read check
+ * `queryDocsEvento` applies to a frontend read: the ACL's `read` action for the
+ * acting identity. Two deliberate v1 restrictions, both fail-closed:
+ *
+ * - **Anonymous callers are denied** (a `fetch`-lane trigger with no session):
+ *   there is no anonymous read story here yet — the frontend anonymous read runs
+ *   through publicAccess gates this path doesn't replicate.
+ * - **Access-fn-bound dbs are denied**: queryDocs channel-filters those docs per
+ *   reader; replicating that filter here is future work, and returning UNfiltered
+ *   docs would be a grant bypass. A backend that needs to read a db should keep
+ *   that db on a plain ACL.
+ *
+ * No file-URL minting (`mintFilesUrls`): a backend handler has no session to use
+ * signed URLs with; it reads raw doc data.
+ */
+async function handleBackendQuery(
+  vctx: VibesApiSQLCtx,
+  base: BackendDbCallbackBase,
+  op: Extract<BackendDbOp, { kind: "query" }>
+): Promise<BackendDbResult> {
+  const { ownerHandle, appSlug } = base;
+  const dbName = op.db;
+  const userId = base.identity.userId;
+
+  if (!userId) return deny("Access denied", "access-denied");
+
+  const { access } = await checkDocAccess(vctx, userId, appSlug, ownerHandle, false);
+  const rAcl = await resolveDbAcl(vctx, ownerHandle, appSlug, dbName);
+  // Fail closed: a settings-read error must not fall back to the open default.
+  if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "read", access)) return deny("Access denied", "access-denied");
+
+  // v1: no channel filtering — refuse access-fn-bound dbs outright (see docstring).
+  const afbRow = await resolveAccessBinding(vctx, ownerHandle, appSlug, dbName);
+  if (afbRow?.accessFnCid) {
+    return deny("ctx.db.query does not support access-fn-bound databases", "access-denied");
+  }
+
+  const t = vctx.sql.tables.appDocuments;
+  const rows = await vctx.sql.db
+    .select({ docId: t.docId, seq: t.seq, deleted: t.deleted, data: t.data })
+    .from(t)
+    .where(and(eq(t.ownerHandle, ownerHandle), eq(t.appSlug, appSlug), eq(t.dbName, dbName)))
+    .orderBy(t.docId, t.seq);
+
+  // Last row per docId wins (highest seq), skip deleted — same projection as
+  // queryDocsEvento.
+  const latest = new Map<string, (typeof rows)[0]>();
+  for (const row of rows) latest.set(row.docId, row);
+  const docs: Record<string, unknown>[] = [];
+  for (const row of latest.values()) {
+    if (row.deleted === 1) continue;
+    docs.push({ _id: row.docId, ...(row.data as Record<string, unknown>) });
+    if (docs.length >= BACKEND_QUERY_MAX_DOCS) break;
+  }
+  return { ok: true, docs };
 }
 
 async function handleBackendPut(
