@@ -1781,9 +1781,14 @@ ${rootCssBlock}
                   handles={myHandles}
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
                   onNewHandle={(handle) => void handleNewHandle(handle)}
-                  // Log out from the handle picker's bottom row (matches the
-                  // SessionSidebar / Settings logout — plain Clerk sign-out).
-                  onLogout={authSignedIn ? () => void clerk.signOut() : undefined}
+                  // Log out from the handle picker's bottom row. Unlike the
+                  // SessionSidebar / Settings logout (plain sign-out → Clerk's
+                  // default "/" redirect), stay on THIS vibe: you signed out of
+                  // an app you were looking at, so keep looking at it — as a
+                  // visitor now (a private vibe just shows its login overlay).
+                  // Full-URL reload via redirectUrl also resets all the
+                  // ownership-gated route state cleanly.
+                  onLogout={authSignedIn ? () => void clerk.signOut({ redirectUrl: window.location.href }) : undefined}
                   // Owner-only: making a new avatar writes to the active handle.
                   // Pass the promise through (no `void`) so ViewerTagView's
                   // `await onPickFile` holds its uploading state through the
