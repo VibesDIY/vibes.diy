@@ -211,5 +211,28 @@ describe("makeBackendDbCallback (#2856 B6)", { timeout: 30000 }, () => {
     expect(byId.get("s1")).toMatchObject({ kind: "highscore", score: 10 });
     expect(byId.get("s2")).toMatchObject({ kind: "highscore", score: 25 });
     expect(byId.has("s3")).toBe(false);
+
+    // Frontend parity (Codex P2): a signed-in NON-member reading a PUBLIC app's
+    // plain db goes through `readAllowed`'s public fallback, exactly like
+    // queryDocsEvento — not a bare role-ACL check that would deny them.
+    await ownerApi.ensureAppSettings({
+      appSlug: res.appSlug,
+      ownerHandle: res.ownerHandle,
+      publicAccess: { enable: true },
+    });
+    const strangerId = await resolveBackendWriteIdentity(vibesCtx, {
+      ownerHandle: res.ownerHandle,
+      appSlug: res.appSlug,
+      userId: "user-id-be-db-cb-999", // no role on this app
+    });
+    const strangerDb = makeBackendDbCallback(vibesCtx, {
+      ownerHandle: res.ownerHandle,
+      appSlug: res.appSlug,
+      identity: strangerId,
+      originDepth: 0,
+    });
+    const pq = await strangerDb({ kind: "query", db: "scores" });
+    assert(pq.ok && "docs" in pq, "expected the public fallback to allow the read");
+    expect(pq.docs.length).toBe(2);
   });
 });

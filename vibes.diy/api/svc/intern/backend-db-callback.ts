@@ -1,11 +1,12 @@
 import { exception2Result } from "@adviser/cement";
 import type { BackendDbCallback, BackendDbOp, BackendDbResult } from "@vibes.diy/vibe-runtime/backend-executor.js";
-import { and, desc, eq } from "drizzle-orm";
+import { aliasedTable, and, desc, eq, max } from "drizzle-orm";
 import type { VibesSqlite } from "@vibes.diy/api-sql";
 import { VibesApiSQLCtx } from "../types.js";
 import { type AccessDescriptor } from "../public/access-function.js";
 import { checkDocAccess } from "../public/access-helpers.js";
 import { aclAllows, resolveDbAcl } from "../public/db-acl-resolver.js";
+import { readAllowed } from "../public/app-documents-shared.js";
 import { resolveAccessBinding } from "../public/access-binding-resolver.js";
 import { resolveActiveHandle } from "../public/resolve-active-handle.js";
 import { allocateAndInsertRevision, SeqConflictError } from "../public/seq-allocation.js";
@@ -150,7 +151,12 @@ async function handleBackendQuery(
   const { access } = await checkDocAccess(vctx, userId, appSlug, ownerHandle, false);
   const rAcl = await resolveDbAcl(vctx, ownerHandle, appSlug, dbName);
   // Fail closed: a settings-read error must not fall back to the open default.
-  if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "read", access)) return deny("Access denied", "access-denied");
+  // Same helper as the frontend read gate (Codex P2): `readAllowed` keeps the
+  // no-explicit-ACL fallback to public-readability, so a public app's plain db
+  // reads identically from the backend lane and from queryDocsEvento.
+  if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, appSlug, ownerHandle))) {
+    return deny("Access denied", "access-denied");
+  }
 
   // v1: no channel filtering — refuse access-fn-bound dbs outright (see docstring).
   const afbRow = await resolveAccessBinding(vctx, ownerHandle, appSlug, dbName);
@@ -158,23 +164,34 @@ async function handleBackendQuery(
     return deny("ctx.db.query does not support access-fn-bound databases", "access-denied");
   }
 
+  // Latest-head projection pushed into SQL (Codex P2): pick each doc's max-seq
+  // revision with a correlated subquery, drop tombstoned heads, and CAP in the
+  // database — so a db with deep history or many docs never materializes every
+  // revision into the DO's memory. Ordered by docId so a capped read is stable.
   const t = vctx.sql.tables.appDocuments;
+  const t2 = aliasedTable(t, "headseq");
   const rows = await vctx.sql.db
-    .select({ docId: t.docId, seq: t.seq, deleted: t.deleted, data: t.data })
+    .select({ docId: t.docId, data: t.data })
     .from(t)
-    .where(and(eq(t.ownerHandle, ownerHandle), eq(t.appSlug, appSlug), eq(t.dbName, dbName)))
-    .orderBy(t.docId, t.seq);
+    .where(
+      and(
+        eq(t.ownerHandle, ownerHandle),
+        eq(t.appSlug, appSlug),
+        eq(t.dbName, dbName),
+        eq(t.deleted, 0),
+        eq(
+          t.seq,
+          vctx.sql.db
+            .select({ m: max(t2.seq) })
+            .from(t2)
+            .where(and(eq(t2.ownerHandle, ownerHandle), eq(t2.appSlug, appSlug), eq(t2.dbName, dbName), eq(t2.docId, t.docId)))
+        )
+      )
+    )
+    .orderBy(t.docId)
+    .limit(BACKEND_QUERY_MAX_DOCS);
 
-  // Last row per docId wins (highest seq), skip deleted — same projection as
-  // queryDocsEvento.
-  const latest = new Map<string, (typeof rows)[0]>();
-  for (const row of rows) latest.set(row.docId, row);
-  const docs: Record<string, unknown>[] = [];
-  for (const row of latest.values()) {
-    if (row.deleted === 1) continue;
-    docs.push({ _id: row.docId, ...(row.data as Record<string, unknown>) });
-    if (docs.length >= BACKEND_QUERY_MAX_DOCS) break;
-  }
+  const docs: Record<string, unknown>[] = rows.map((row) => ({ _id: row.docId, ...(row.data as Record<string, unknown>) }));
   return { ok: true, docs };
 }
 
