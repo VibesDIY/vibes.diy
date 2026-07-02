@@ -1,9 +1,3 @@
-// Handles allowed to mint "super" grants. A `grant` doc gives its grantee read access
-// to the "super" channel, which carries EVERY user's favorites — so only real admins
-// may write one. Set this to your own Vibes handle(s). See RUNBOOK.md § Granting super
-// access. (This is the handle you're signed in as when you write the doc via the CLI.)
-const ADMIN_HANDLES = ["jchris", "jchrisa"];
-
 export default function (doc, oldDoc, user, ctx) {
   // Deletes arrive as tombstones that may not carry the original fields, so fall back to
   // oldDoc for type/owner/etc.
@@ -64,10 +58,11 @@ export default function (doc, oldDoc, user, ctx) {
   }
 
   // A `grant` doc unlocks the "super" favorites firehose for one user (doc.grantTo).
-  // Admin-only — a non-admin must not be able to grant themselves the whole festival's
-  // favorites. Written manually via the CLI; see RUNBOOK.md § Granting super access.
+  // Owner-only — `user.isOwner` is the reserved vibe-owner flag (the account that owns
+  // this deployment, i.e. whoever writes it via the CLI). A regular user must not be able
+  // to grant themselves the whole festival's favorites. See RUNBOOK.md § Granting super access.
   if (type === "grant") {
-    if (!ADMIN_HANDLES.includes(user.userHandle)) throw { forbidden: "not admin" };
+    if (!user.isOwner) throw { forbidden: "owner only" };
     const grantee = doc.grantTo != null ? doc.grantTo : oldDoc && oldDoc.grantTo;
     return {
       channels: ["grants"],
