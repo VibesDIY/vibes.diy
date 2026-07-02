@@ -1,7 +1,7 @@
 ---
 title: "Every vibe just got a backend"
 date: 2026-07-02
-summary: "One new file — backend.js — gives your vibe a server side: answer webhooks at your app's own /_api URL, react to every saved document, and run work on a timer. Server writes go through the exact same access rules as user writes, so your permission model stays in one place."
+summary: "One new file — backend.js — runs on our servers for your app: answer webhooks at your own /_api URL, react to every saved document, and run work on a timer. Server writes go through the exact same access rules as user writes, so your permission model stays in one place."
 description: "Introducing backend.js for Vibes DIY apps: fetch, onChange, and scheduled handlers with database writes that pass through your app's own access.js."
 thumb: "/images/blog/backend-js-server-side-vibes/scheduled-heartbeat.png"
 ---
@@ -90,6 +90,9 @@ page calls `fetch("/_api/hit?note=…")`, the server handler writes a `hit`
 document through the access gate, and the list updates from the live query —
 server write to synced UI, end to end.
 
+<!-- At publish time this embed's sandbox/allow values match the runtime policy
+     in vibes.diy/pkg/app/lib/iframe-policy.ts; if the policy tokens change,
+     regenerate this snippet from the Share modal's embed copy. -->
 <iframe
   src="https://vibes.diy/embed/jchris/backend-fetch"
   style="width:100%;aspect-ratio:16/9;border:0"
@@ -173,15 +176,13 @@ silently at 3am.
 
 ## The honest edges
 
-`backend.js` launches deliberately closed where it should be closed. There's
-**no outside network access** — `fetch()` to external URLs is refused inside a
-handler (the only egress a backend has is its own database channel) — and no
-secrets store yet, so third-party API calls and their keys aren't a backend
-job for now; AI calls stay in `App.jsx` via `callAI`. Verified signed-in
-identity on the `fetch` lane is landing next; until then, treat `fetch`
-writes as anonymous and gate them accordingly. Each of those doors opens in a
-later release — deliberately, with the same access-gate discipline as the
-database channel.
+`backend.js` currently has **no external network egress**, and `ctx.secrets`
+is not available yet — third-party API calls and API keys are out of scope for
+now, and AI calls stay in `App.jsx` via `callAI`. Verified signed-in identity
+on the `fetch` lane is landing next; until then, treat `fetch` writes as
+anonymous and gate them accordingly. Each of those doors opens in a later
+release — deliberately, with the same access-gate discipline as the database
+channel.
 
 All three demo apps in this post are live, and their complete source —
 `App.jsx`, `access.js`, `backend.js` — is pullable with the CLI:
