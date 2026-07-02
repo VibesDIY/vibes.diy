@@ -61,6 +61,12 @@ which means a browser can't fetch them directly from a web app — the request i
 before it starts. (Pickathon's feed happens to allow it, which is why the original could
 fetch it straight from the page. Yours probably doesn't.)
 
+The easiest fix is often the most direct: if you have admin reach over your own feed —
+and if you're reading this, you probably do — just **add the `Access-Control-Allow-Origin`
+header to it.** One header, and the app can fetch your schedule straight from the browser
+the way it does Pickathon's — no backend, no cache, nothing to run. Do that if you can;
+the rest of this section is for when you can't touch the feed.
+
 The wrong fix is to stand up a live proxy that re-fetches your feed on every visit — now
 you're running a server, and you're hammering your own API once per fan. The right shape
 is a **scheduled server-side fetch that caches the schedule as a single record your app
