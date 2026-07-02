@@ -45,11 +45,21 @@ export interface CuratedEdge {
 // bloom-root ─"Add a pattern sequencer"→ bloom-machine ─"Make it a drum machine"→ bloom-drums
 //            └"Make it a memory game"──→ bloom-says   (a Game — categories are doors, not fences)
 //
-// ── v1.1 content: Games (from the landing-pages mind-games featured apps) ────
-// match-pairs ─"Make the pairs play tones"────→ tone-pairs  ·leaf (sonic evolution)
-//             └"Hunt the color word instead"──→ hue-hunt ─"Let me play unlimited rounds"→ hue-rush ·leaf
+// ── v1.1 content: the matching-games branch (rooted under bloom-says) ─────────
+// bloom-says ─"Make it a matching game"→ match-pairs
+//   match-pairs ─"Make the pairs play tones"────→ tone-pairs  ·leaf (sonic evolution)
+//               └"Hunt the color word instead"──→ hue-hunt ─"Let me play unlimited rounds"→ hue-rush ·leaf
 // (match-pairs/hue-hunt adapted from jchris/memory-pairs + jchris/hue-hunt;
-//  tone-pairs/hue-rush are their hand-tuned evolutions. Sources: vibes/<slug>/.)
+//  tone-pairs/hue-rush are their hand-tuned evolutions. Sources: vibes/<slug>/.
+//  The branch hangs off the Music tree's game leaf — not a /start tile — so the
+//  deep games live one hop past bloom-says, and the Games tile stays free for
+//  the word-games lane.)
+
+// ── v1.2 content: Games / word games ──────────────────────────────────────────
+// word-jumble ─"Grow it into a spelling hive"→ jchris/spelling-hive  ·leaf
+// (word-jumble is the touch-first unscramble entry; spelling-hive is the full
+//  7-letter comb — real ENABLE word lists, public top-50 leaderboard, backend
+//  daily prune. A cross-OWNER curated link: the target just has to be public.)
 
 export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   {
@@ -61,8 +71,8 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   {
     category: "Games",
     label: "Games",
-    blurb: "Flip and match pairs, then give them voices — or hunt color words as long as you like.",
-    entry: { ownerHandle: "system", appSlug: "match-pairs" },
+    blurb: "Untangle a word from six letters, then grow it into a spelling hive with scores to beat.",
+    entry: { ownerHandle: "system", appSlug: "word-jumble" },
   },
 ];
 
@@ -83,6 +93,11 @@ export const CURATED_EDGES: readonly CuratedEdge[] = [
     target: { ownerHandle: "system", appSlug: "bloom-drums" },
   },
   {
+    source: { ownerHandle: "system", appSlug: "bloom-says" },
+    chipLabel: "Make it a matching game",
+    target: { ownerHandle: "system", appSlug: "match-pairs" },
+  },
+  {
     source: { ownerHandle: "system", appSlug: "match-pairs" },
     chipLabel: "Make the pairs play tones",
     target: { ownerHandle: "system", appSlug: "tone-pairs" },
@@ -96,6 +111,11 @@ export const CURATED_EDGES: readonly CuratedEdge[] = [
     source: { ownerHandle: "system", appSlug: "hue-hunt" },
     chipLabel: "Let me play unlimited rounds",
     target: { ownerHandle: "system", appSlug: "hue-rush" },
+  },
+  {
+    source: { ownerHandle: "system", appSlug: "word-jumble" },
+    chipLabel: "Grow it into a spelling hive",
+    target: { ownerHandle: "jchris", appSlug: "spelling-hive" },
   },
 ];
 

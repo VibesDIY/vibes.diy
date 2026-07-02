@@ -52,13 +52,17 @@ export interface BackendTrigger {
  */
 export type BackendDbOp =
   | { readonly kind: "put"; readonly db: string; readonly doc: unknown; readonly docId: string | null }
-  | { readonly kind: "delete"; readonly db: string; readonly docId: string };
+  | { readonly kind: "delete"; readonly db: string; readonly docId: string }
+  | { readonly kind: "query"; readonly db: string };
 
 /** Result of a `ctx.db` op. `ok:false` carries the gate's deny reason (and the
  *  `access-denied`/`unreadable`/`conflict` code where one applies) so the
- *  isolate's `ctx.db.put`/`delete` can reject with a faithful error. */
+ *  isolate's `ctx.db.put`/`delete`/`query` can reject with a faithful error.
+ *  `put`/`delete` resolve with `id`; `query` resolves with `docs` (the db's
+ *  latest non-deleted revisions, `_id` included, capped host-side). */
 export type BackendDbResult =
   | { readonly ok: true; readonly id: string }
+  | { readonly ok: true; readonly docs: readonly Record<string, unknown>[] }
   | { readonly ok: false; readonly error: string; readonly code?: string };
 
 /**

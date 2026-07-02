@@ -1,11 +1,12 @@
 import { exception2Result } from "@adviser/cement";
 import type { BackendDbCallback, BackendDbOp, BackendDbResult } from "@vibes.diy/vibe-runtime/backend-executor.js";
-import { and, desc, eq } from "drizzle-orm";
+import { aliasedTable, and, desc, eq, max } from "drizzle-orm";
 import type { VibesSqlite } from "@vibes.diy/api-sql";
 import { VibesApiSQLCtx } from "../types.js";
 import { type AccessDescriptor } from "../public/access-function.js";
 import { checkDocAccess } from "../public/access-helpers.js";
 import { aclAllows, resolveDbAcl } from "../public/db-acl-resolver.js";
+import { readAllowed } from "../public/app-documents-shared.js";
 import { resolveAccessBinding } from "../public/access-binding-resolver.js";
 import { resolveActiveHandle } from "../public/resolve-active-handle.js";
 import { allocateAndInsertRevision, SeqConflictError } from "../public/seq-allocation.js";
@@ -103,12 +104,95 @@ export function makeBackendDbCallback(vctx: VibesApiSQLCtx, base: BackendDbCallb
     if (op.kind === "put") {
       return handleBackendPut(vctx, base, op);
     }
+    if (op.kind === "query") {
+      return handleBackendQuery(vctx, base, op);
+    }
     return handleBackendDelete(vctx, base, op);
   };
 }
 
 function deny(message: string, code?: string): BackendDbResult {
   return { ok: false, error: message, code };
+}
+
+// Hard cap on a backend query result. The docs cross the isolate boundary as one
+// JSON body; a runaway db must not OOM the DO or the isolate. Sorted by docId for
+// determinism before the cap is applied, so a capped read is at least stable.
+const BACKEND_QUERY_MAX_DOCS = 2000;
+
+/**
+ * `ctx.db.query` — the backend read lane. Returns the db's latest non-deleted
+ * revisions (`_id` included), gated by the SAME front-door read check
+ * `queryDocsEvento` applies to a frontend read: the ACL's `read` action for the
+ * acting identity. Two deliberate v1 restrictions, both fail-closed:
+ *
+ * - **Anonymous callers are denied** (a `fetch`-lane trigger with no session):
+ *   there is no anonymous read story here yet — the frontend anonymous read runs
+ *   through publicAccess gates this path doesn't replicate.
+ * - **Access-fn-bound dbs are denied**: queryDocs channel-filters those docs per
+ *   reader; replicating that filter here is future work, and returning UNfiltered
+ *   docs would be a grant bypass. A backend that needs to read a db should keep
+ *   that db on a plain ACL.
+ *
+ * No file-URL minting (`mintFilesUrls`): a backend handler has no session to use
+ * signed URLs with; it reads raw doc data.
+ */
+async function handleBackendQuery(
+  vctx: VibesApiSQLCtx,
+  base: BackendDbCallbackBase,
+  op: Extract<BackendDbOp, { kind: "query" }>
+): Promise<BackendDbResult> {
+  const { ownerHandle, appSlug } = base;
+  const dbName = op.db;
+  const userId = base.identity.userId;
+
+  if (!userId) return deny("Access denied", "access-denied");
+
+  const { access } = await checkDocAccess(vctx, userId, appSlug, ownerHandle, false);
+  const rAcl = await resolveDbAcl(vctx, ownerHandle, appSlug, dbName);
+  // Fail closed: a settings-read error must not fall back to the open default.
+  // Same helper as the frontend read gate (Codex P2): `readAllowed` keeps the
+  // no-explicit-ACL fallback to public-readability, so a public app's plain db
+  // reads identically from the backend lane and from queryDocsEvento.
+  if (rAcl.isErr() || !(await readAllowed(vctx, rAcl.Ok(), access, appSlug, ownerHandle))) {
+    return deny("Access denied", "access-denied");
+  }
+
+  // v1: no channel filtering — refuse access-fn-bound dbs outright (see docstring).
+  const afbRow = await resolveAccessBinding(vctx, ownerHandle, appSlug, dbName);
+  if (afbRow?.accessFnCid) {
+    return deny("ctx.db.query does not support access-fn-bound databases", "access-denied");
+  }
+
+  // Latest-head projection pushed into SQL (Codex P2): pick each doc's max-seq
+  // revision with a correlated subquery, drop tombstoned heads, and CAP in the
+  // database — so a db with deep history or many docs never materializes every
+  // revision into the DO's memory. Ordered by docId so a capped read is stable.
+  const t = vctx.sql.tables.appDocuments;
+  const t2 = aliasedTable(t, "headseq");
+  const rows = await vctx.sql.db
+    .select({ docId: t.docId, data: t.data })
+    .from(t)
+    .where(
+      and(
+        eq(t.ownerHandle, ownerHandle),
+        eq(t.appSlug, appSlug),
+        eq(t.dbName, dbName),
+        eq(t.deleted, 0),
+        eq(
+          t.seq,
+          vctx.sql.db
+            .select({ m: max(t2.seq) })
+            .from(t2)
+            .where(and(eq(t2.ownerHandle, ownerHandle), eq(t2.appSlug, appSlug), eq(t2.dbName, dbName), eq(t2.docId, t.docId)))
+        )
+      )
+    )
+    .orderBy(t.docId)
+    .limit(BACKEND_QUERY_MAX_DOCS);
+
+  const docs: Record<string, unknown>[] = rows.map((row) => ({ _id: row.docId, ...(row.data as Record<string, unknown>) }));
+  return { ok: true, docs };
 }
 
 async function handleBackendPut(

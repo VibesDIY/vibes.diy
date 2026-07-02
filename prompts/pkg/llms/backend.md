@@ -53,6 +53,7 @@ ctx.appInfo; // { ownerHandle, appSlug } — this app's identity
 ctx.userInfo; // { userHandle } or null — who the handler is acting as
 await ctx.db.put(doc, { db: "notes", id: "optional-id" }); // resolves to the doc id AFTER commit
 await ctx.db.delete(docId, { db: "notes" });
+const docs = await ctx.db.query({ db: "notes" }); // latest non-deleted docs (each with _id)
 ```
 
 - `{ db }` names the Fireproof database (same names `App.jsx` uses with
@@ -60,6 +61,12 @@ await ctx.db.delete(docId, { db: "notes" });
   database that triggered the event is the default.
 - Always `await` db calls; they resolve only after the write commits (or throw
   when the access function denies it).
+- `ctx.db.query({ db })` returns the whole database's latest docs (capped at
+  2000) — filter and sort in the handler. It is read-ACL-gated as the acting
+  identity, anonymous `fetch` callers are denied, and databases bound to an
+  access function cannot be queried from the backend (keep backend-read
+  databases on plain ACLs). Made for `scheduled` sweeps: read, decide, then
+  `put`/`delete`.
 - **No outside network access**: `fetch()` to external URLs is refused inside
   `backend.js`, and there are no secrets/API keys yet. Don't call third-party
   APIs from the backend; AI calls stay in `App.jsx` via `callAI`.

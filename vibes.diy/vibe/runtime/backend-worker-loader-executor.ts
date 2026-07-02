@@ -19,7 +19,8 @@ const COMPATIBILITY_DATE = "2025-05-01";
 // into the hashed `main` so a change forces a fresh isolate id — a capability-shape
 // change can NEVER be served by a stale cached isolate (Charlie watch-out). Bump on
 // any change to the db-op contract or the `ctx.db` surface below.
-const BINDING_SCHEMA_VERSION = "v1";
+// v2: ctx.db.query (read lane) added to the surface + the docs result variant.
+const BINDING_SCHEMA_VERSION = "v2";
 // Internal URL the isolate POSTs db ops to. The isolate's `globalOutbound` (a
 // stub back to the host BackendDO) delivers it to the DO's `fetch`, which routes
 // exactly this URL to `handleBackendDbOp` and refuses all other egress — so a
@@ -148,19 +149,27 @@ export function buildBackendWorkerCode(input: {
     `    const r = await fetch(${JSON.stringify(BACKEND_DB_OP_URL)}, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nonce: dbNonce, op: op }) });`,
     `    const out = await r.json();`,
     `    if (!out || out.ok !== true) throw new Error((out && out.error) || "ctx.db op failed");`,
-    `    return out.id;`,
+    `    return out;`,
     `  }`,
     `  return {`,
     `    put(doc, options) {`,
     `      const db = (options && options.db) || defaultDb;`,
     `      if (!db) throw new Error("ctx.db.put requires a db name — pass { db } (no default db for this trigger)");`,
     `      const docId = (options && options.id) || (doc && doc._id) || null;`,
-    `      return rpc({ kind: "put", db: db, doc: doc, docId: docId });`,
+    `      return rpc({ kind: "put", db: db, doc: doc, docId: docId }).then((out) => out.id);`,
     `    },`,
     `    delete(id, options) {`,
     `      const db = (options && options.db) || defaultDb;`,
     `      if (!db) throw new Error("ctx.db.delete requires a db name — pass { db } (no default db for this trigger)");`,
-    `      return rpc({ kind: "delete", db: db, docId: id });`,
+    `      return rpc({ kind: "delete", db: db, docId: id }).then((out) => out.id);`,
+    `    },`,
+    // query (read lane): the db's latest non-deleted docs, `_id` included, read-
+    // ACL-gated host-side and capped there. Filter/sort in the handler — the op
+    // deliberately carries no index semantics.
+    `    query(options) {`,
+    `      const db = (options && options.db) || defaultDb;`,
+    `      if (!db) throw new Error("ctx.db.query requires a db name — pass { db } (no default db for this trigger)");`,
+    `      return rpc({ kind: "query", db: db }).then((out) => out.docs || []);`,
     `    },`,
     `  };`,
     `}`,
