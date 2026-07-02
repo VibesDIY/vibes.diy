@@ -1852,6 +1852,11 @@ ${rootCssBlock}
                     // Reuses the createVibe helper's PR-origin detection.
                     window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
                   }}
+                  // The "?" nav circle — the about page on the same (prod or
+                  // preview) builder origin as Home above.
+                  onAbout={() => {
+                    window.open(`${resolveBuilderOriginFrom(window.location.origin)}/about`, "_blank");
+                  }}
                   onEdit={() => {
                     setEditorTab(null);
                     setShareViewOpen(false);

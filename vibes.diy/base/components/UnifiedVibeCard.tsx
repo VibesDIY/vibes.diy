@@ -112,6 +112,8 @@ export interface UnifiedVibeCardProps {
   /** Disables the Publish button + shows a pending label while a publish is in flight. */
   publishing?: boolean;
   onHome?: () => void;
+  /** Open the Vibes DIY about page — wired to the "?" circle in the bottom nav row. */
+  onAbout?: () => void;
   /** Selects the edit affordance (switches the body back to chips/Other). */
   onEdit?: () => void;
   onShare?: () => void;
@@ -500,6 +502,9 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 buttonRef={props.shareButtonRef}
               >
                 ↗
+              </NavIcon>
+              <NavIcon label="About Vibes DIY" color="#6b7280" onClick={props.onAbout}>
+                ?
               </NavIcon>
               {/* Invisible placeholder matching the persistent logo's footprint
                   (size 60 → 120×60) so the bottom row flows AROUND the logo, which
