@@ -129,6 +129,19 @@ describe("UnifiedVibeCard", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("keeps the nav circles shrink-proof and var-sized so five fit narrow phones (Codex P2 #3037)", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open />);
+    // Five circles now: Home, Edit, Editor, Share, About. Flex's default shrink
+    // would squash them into ovals on a 375px viewport; instead they're
+    // flexShrink 0 and sized by the --uvc-nav-size step-down media queries.
+    for (const name of [/^home$/i, /^edit$/i, /^editor$/i, /^share$/i, /about vibes diy/i]) {
+      const btn = screen.getByRole("button", { name }) as HTMLButtonElement;
+      expect(btn.style.flexShrink).toBe("0");
+      expect(btn.style.width).toBe("var(--uvc-nav-size, 38px)");
+      expect(btn.style.height).toBe("var(--uvc-nav-size, 38px)");
+    }
+  });
+
   it("closes when the click-away backdrop is clicked", () => {
     const onOpenChange = vi.fn();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open onOpenChange={onOpenChange} />);

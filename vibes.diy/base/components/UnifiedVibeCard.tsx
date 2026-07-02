@@ -180,6 +180,18 @@ const unifiedVibeCardDarkCss = `
   }
 }
 .dark [data-unified-vibe-card], .dark [data-vibe-handle-menu] {${UNIFIED_VIBE_CARD_DARK_VARS}
+}
+/* Bottom-nav circles on narrow phones: five fixed 38px circles + the 120px logo
+   spacer + 6px gaps need 340px of row width, but a 375px viewport only leaves
+   327px after the card insets and row padding — and flex's default shrink would
+   squash the circles into ovals. The circles are shrink-proof (flexShrink 0 in
+   NavIcon) and instead step DOWN via these vars so the row keeps fitting, clear
+   of the floating logo, on common 360–400px phones (Codex P2 on #3037). */
+@media (max-width: 400px) {
+  [data-unified-vibe-card] { --uvc-nav-size: 34px; --uvc-nav-gap: 4px; }
+}
+@media (max-width: 360px) {
+  [data-unified-vibe-card] { --uvc-nav-size: 30px; }
 }`;
 
 export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
@@ -430,7 +442,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
+                gap: "var(--uvc-nav-gap, 6px)",
                 padding: "10px 12px 6px",
                 borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
               }}
@@ -879,8 +891,12 @@ function NavIcon({
       aria-label={label}
       onClick={onClick}
       style={{
-        width: 38,
-        height: 38,
+        // Sized by the narrow-viewport step-down vars (see the card's <style>):
+        // never flex-shrunk, so the circles stay round instead of squashing when
+        // the row gets tight.
+        width: "var(--uvc-nav-size, 38px)",
+        height: "var(--uvc-nav-size, 38px)",
+        flexShrink: 0,
         borderRadius: "50%",
         background: color,
         display: "flex",
