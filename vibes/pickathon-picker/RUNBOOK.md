@@ -36,9 +36,10 @@ npx vibes-diy pull og/pickathon-picker
 ## Granting super access
 
 The `super` channel (every user's favorites) is unreadable by default. To let a specific
-account read it — e.g. to see true global pick counts — write a **`grant` doc** as an
-admin. Only handles listed in `ADMIN_HANDLES` at the top of `access.js` may write one
-(set that list to your own Vibes handle; it's the handle you're signed in as via the CLI).
+account read it — e.g. to see true global pick counts — write a **`grant` doc**. Only the
+**vibe owner** may write one: `access.js` gates it on the reserved `user.isOwner` flag, so
+whoever owns this deployment (you, writing via the CLI while signed in) is authorized
+automatically — no handle list to maintain.
 
 ```bash
 # Grant <handle> read access to the whole "super" favorites firehose:

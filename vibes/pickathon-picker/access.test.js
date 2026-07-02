@@ -41,14 +41,16 @@ describe("access.js — channel routing", () => {
   });
 });
 
-describe("access.js — super grants (admin only)", () => {
-  it("an admin grant doc unlocks the super channel for its grantee", () => {
-    const { ok } = run({ type: "grant", grantTo: "carol" }, null, { userHandle: "jchris" });
+describe("access.js — super grants (owner only)", () => {
+  it("an owner's grant doc unlocks the super channel for its grantee", () => {
+    const { ok } = run({ type: "grant", grantTo: "carol" }, null, { userHandle: "jchris", isOwner: true });
     expect(ok.grant.users.carol).toEqual(["super"]);
   });
 
-  it("a non-admin cannot mint a super grant", () => {
-    expect(run({ type: "grant", grantTo: "mallory" }, null, { userHandle: "mallory" })).toEqual({ forbidden: "not admin" });
+  it("a non-owner cannot mint a super grant", () => {
+    expect(run({ type: "grant", grantTo: "mallory" }, null, { userHandle: "mallory", isOwner: false })).toEqual({
+      forbidden: "owner only",
+    });
   });
 });
 
