@@ -15,7 +15,7 @@ that fixed that without hiring anyone, and an invitation for yours to do the sam
 
 ## Pickathon made it official
 
-Two summers back, a Pickathon regular named Meghan Sinnot wanted a better way to plan her
+Two summers back, a Pickathon regular named Meghan Sinnott wanted a better way to plan her
 weekend on the farm, so she *vibed* one into existence in a single afternoon — no
 engineers, no budget, just a prompt on [Vibes DIY](https://vibes.diy). Browse the lineup,
 star the sets you can't miss, jot private notes, block out your meal and volunteer times,
