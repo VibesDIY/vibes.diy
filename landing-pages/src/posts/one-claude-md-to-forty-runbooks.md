@@ -6,7 +6,7 @@ summary: "A year of agent documentation, read straight from git history: a 103-l
 thumb: "/images/blog/one-claude-md-to-forty-runbooks/card.jpg"
 ---
 
-You can read a team's history in its documentation the way you read a tree's history in its rings. Ours is unusually legible, because the documentation in question is written *for agents* — and every time the way we work changed, the docs had to change the same week or the agents kept doing the old thing. Today the repo carries a 79-line `CLAUDE.md` that is mostly a table of contents, forty runbooks under `agents/`, and a directory of invokable skills. A year ago it was one file, 103 lines long. Git remembers every step in between.
+You can read a team's history in its documentation the way you read a tree's history in its rings. Ours is unusually legible, because the documentation in question is written *for agents* — and every time the way we work changed, the docs had to change the same week or the agents kept doing the old thing. Today the repo carries a 113-line `CLAUDE.md` that is mostly a table of contents, forty runbooks under `agents/`, and a directory of invokable skills. A year ago it was one file, 103 lines long. Git remembers every step in between.
 
 <figure>
     <img src="/images/blog/one-claude-md-to-forty-runbooks/card.jpg" alt="Title card: “1 file → 40 runbooks” set over shelves of books, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
@@ -53,7 +53,7 @@ Notice what changed in *kind*, not just count. The 2025 file described code. The
         <tr><td>Jul 2025 – Mar 2026</td><td>One file, peaking at 326 lines</td><td>Monorepo, packages, tag-based publishing</td><td>Stop releases from breaking</td></tr>
         <tr><td>Apr 2026</td><td>27-line hub + <code>agents/</code></td><td>In-place editing pipeline, more parallel sessions</td><td>Make the rules reviewable and shared</td></tr>
         <tr><td>May 2026</td><td>+ repo-backed memory, + skills</td><td>Worktrees, multi-agent dispatch, QA SOPs</td><td>Split "how we work" from "things we invoke"</td></tr>
-        <tr><td>Jun 2026 →</td><td>79-line hub + 40 runbooks</td><td>Cloud containers, evals, autonomous merges</td><td>Operate unattended</td></tr>
+        <tr><td>Jun 2026 →</td><td>113-line hub + 40 runbooks</td><td>Cloud containers, evals, autonomous merges</td><td>Operate unattended</td></tr>
     </tbody>
 </table>
 </div>
@@ -61,7 +61,7 @@ Notice what changed in *kind*, not just count. The 2025 file described code. The
 ## What the rings say
 
 - **Don't design the structure; harvest it.** Every good file in `agents/` earned its existence by hurting first. The one deliberate act was the split — recognizing when the pile needed shelves.
-- **The index is the interface.** An agent reads the 79-line `CLAUDE.md` every session and fetches runbooks on demand, so each link's one-line summary is a retrieval key, written so the right doc gets pulled at the right moment. Those summaries are the most-edited lines in the repo.
+- **The index is the interface.** An agent reads the 113-line `CLAUDE.md` every session and fetches runbooks on demand, so each link's one-line summary is a retrieval key, written so the right doc gets pulled at the right moment. Those summaries are the most-edited lines in the repo.
 - **If it isn't in the repo, it doesn't exist.** Private memory files don't survive an ephemeral container, can't be reviewed, and can't teach the next agent. Version control turned tribal knowledge into infrastructure.
 - **Docs are load-bearing now.** When the reader executes what it reads, a stale doc isn't embarrassing — it's a bug, with a blast radius. That's why doc updates ride in the same PR as the behavior they describe.
 

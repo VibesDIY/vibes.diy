@@ -10,31 +10,65 @@
 
 Team-shared agent instructions live in the [`agents/`](agents/) directory. These files are meant to be actively maintained — update them when rules change, add new files when new patterns emerge, and remove content that's no longer accurate. PRs that change agent behavior should update the relevant agents/ file alongside the code. Before declaring a PR ready, enforce [`agents/rules-bag.md`](agents/rules-bag.md) and run `pnpm run rules-bag:constructors` successfully.
 
+**Every file in `agents/` must be linked below with a one-line summary.** Agents discover these docs through this index, not by listing the directory — an unlinked file is invisible. Write the summary as a retrieval key (symptoms, commands, gotchas), not a title restatement. The index is grouped by lane; docs about the Claude Code harness itself (MCP tools, cloud-session plumbing) live in their own lane at the end, since they concern Claude sessions specifically rather than agents in general.
+
+### Rules & standards
+
 - [rules-bag.md](agents/rules-bag.md) — Fireproof coding rules and patterns
-- [asking-questions.md](agents/asking-questions.md) — Never use the `AskUserQuestion` tool (breaks on mobile); ask in plain text with inline options instead
 - [when-to-ask.md](agents/when-to-ask.md) — Decide the _how_ yourself (with Charlie/review); ask the user only about the _what_, and only when you and Charlie genuinely can't figure it out
-- [code-quality.md](agents/code-quality.md) — Linter rules and how to run tests
-- [testing-access-fn.md](agents/testing-access-fn.md) — Test harness patterns for access-fn behavior (channels, grants, fan-out)
 - [coding-standards.md](agents/coding-standards.md) — No inline HTML, clickable links, review commits
-- [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
-- [npm-new-package-trusted-publishing.md](agents/npm-new-package-trusted-publishing.md) — First publish of a NEW package name fails CI with `ENEEDAUTH` (trusted publishing is per-package); bootstrap-publish → `npm trust github` → re-cut pkg tag
+- [code-quality.md](agents/code-quality.md) — Linter rules and how to run tests
+- [git-workflow.md](agents/git-workflow.md) — Settled branching/rebase/PR conventions (rebase not squash, no force-push to shared branches); the repo and CI are configured around them
+
+### Platform & architecture
+
 - [environments.md](agents/environments.md) — Dev/prod/cli/preview architecture, stable-entry routing
 - [iframe-policy.md](agents/iframe-policy.md) — Vibe iframe sandbox/allow tokens, adding a capability, validating a deployed policy on cli
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
-- [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
-- [db-inspect.md](agents/db-inspect.md) — Query the prod Neon Postgres with `pnpm --dir vibes.diy/api/svc run db:inspect` (read-only `sql`/`tables`/`table`); works in cloud sessions where raw `psql` hangs (agent proxy is HTTPS-only)
-- [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515. Also: a `compile_test` red whose upstreams all concluded `cancelled` is a **superseded run** (concurrency cancel-in-progress), not a real failure — very common; you can't re-run workflows from a cloud session (MCP returns 403), so re-trigger with an empty commit
+- [asset-storage.md](agents/asset-storage.md) — How binary assets (images, files) are stored and retrieved in vibes
+- [fireproof-channels.md](agents/fireproof-channels.md) — Per-database access control; **legacy substrate since #2134**, not the client-facing story
+- [do-session-split.md](agents/do-session-split.md) — Target architecture for splitting the session Durable Object
+- [attribution-pipeline.md](agents/attribution-pipeline.md) — The logpush-etl attribution pipeline: stages + remaining steps (status snapshot 2026-05-25)
+- [meta-capi-results.md](agents/meta-capi-results.md) — How to query and interpret Meta CAPI attribution data
+
+### Ship & operate
+
 - [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal, the autonomous merge loop (hold for Charlie → green → merge → continue → blog post) and its hold-for-human-deploy exception (schema/DO/bindings/risky, any size), closing fixed issues on merge (auto-close is unreliable here)
+- [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
+- [cli-then-prod.md](agents/cli-then-prod.md) — Stage risky ships on the CLI env, verify, then promote to prod (uses the deploy-tags conventions)
+- [do-migrations.md](agents/do-migrations.md) — Wrangler DO migrations are append-only history, not desired state; how to add/delete DO classes without bricking a worker
+- [wrangler-tail.md](agents/wrangler-tail.md) — Live-tailing workers: names by environment and invocation
+- [npm-new-package-trusted-publishing.md](agents/npm-new-package-trusted-publishing.md) — First publish of a NEW package name fails CI with `ENEEDAUTH` (trusted publishing is per-package); bootstrap-publish → `npm trust github` → re-cut pkg tag
+- [db-inspect.md](agents/db-inspect.md) — Query the prod Neon Postgres with `pnpm --dir vibes.diy/api/svc run db:inspect` (read-only `sql`/`tables`/`table`); works in cloud sessions where raw `psql` hangs (agent proxy is HTTPS-only)
+- [identity-ship-verify.md](agents/identity-ship-verify.md) — verify a de-fireproof identity/device-id ship on prod with no re-login: browser sign-in + headless `$VIBES_DEVICE_ID` device-id round-trip + driving the interactive `vibes-diy login` CA-callback headlessly (the agent-proxy-rejects-localhost and 5s-redirect-timer gotchas, with the `context.route` → Node `http.get` fix)
+- [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515. Also: a `compile_test` red whose upstreams all concluded `cancelled` is a **superseded run** (concurrency cancel-in-progress), not a real failure — very common; you can't re-run workflows from a cloud session (MCP returns 403), so re-trigger with an empty commit
+- [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
+- [worktree-setup.md](agents/worktree-setup.md) — Isolated checkouts of this repo: the gitignored files you must copy over before dev/tests work in a new worktree
+- [parallel-implementers.md](agents/parallel-implementers.md) — When dispatching implementation subagents in parallel is safe (disjoint files, well-decomposed plan) and how to do it without index-lock races
+
+### Testing, evals & autoresearch
+
+- [testing-access-fn.md](agents/testing-access-fn.md) — Test harness patterns for access-fn behavior (channels, grants, fan-out)
+- [eval-access-fn.md](agents/eval-access-fn.md) — Access-function system-prompt eval playbook (existing home-page prompts + new sharing/permissions prompts)
+- [eval-local-dev.md](agents/eval-local-dev.md) — Run the codegen-edit harness against the local vite dev server and correlate results with server-side recovery markers
+- [eval-web-then-cli-edit.md](agents/eval-web-then-cli-edit.md) — Web-generated app → CLI `edit` fidelity: single real-environment mixed-client flow (chat UI generate, CLI follow-up)
+- [local-cli-against-local-dev.md](agents/local-cli-against-local-dev.md) — Run the user-facing CLI from a worktree against local dev (companion to eval-local-dev)
 - [codegen-matrix-eval.md](agents/codegen-matrix-eval.md) — Running the cross-model codegen eval harness (generate → score → report), trimmed first run, config & cost filter
 - [codegen-agentic-eval.md](agents/codegen-agentic-eval.md) — Two-mode (one-shot vs agentic) tenability eval: isolates the tool-loop to measure open-weight viability + real $/acceptable
 - [autoresearch-outer-loop.md](agents/autoresearch-outer-loop.md) — Running the vendored autoresearch loop unattended: goal + success predicate, per-iteration state/branch persistence, resume, guardrails, scheduling caveats
 - [access-model-autoresearch.md](agents/access-model-autoresearch.md) — Autoresearch config + loop discipline for the access-model codegen eval (`eval/access-model`): Goal/Metric/Verify/Modify surface, frozen grader/baseline, predict-gate before each 64-app batch
+- [firefly-access-fn-impl-prompt.md](agents/firefly-access-fn-impl-prompt.md) — Historical implementation prompt for the Firefly access-function runtime (kept for reference, not a live runbook)
+
+### Claude Code tooling & sessions
+
+Docs about the Claude Code harness itself — MCP tool quirks, cloud-session browser plumbing — as opposed to team knowledge that applies to any agent.
+
+- [asking-questions.md](agents/asking-questions.md) — Never use the `AskUserQuestion` tool (breaks on mobile); ask in plain text with inline options instead
 - [github-mcp-limits.md](agents/github-mcp-limits.md) — GitHub MCP tools with awkward output + slim alternatives; `actions_list`/`list_workflow_runs` is auto-redirected to `scripts/gh-runs.sh` by a PreToolUse hook
 - [cloud-browser-setup.md](agents/cloud-browser-setup.md) — chrome-devtools MCP screenshots work out of the box in cloud sessions (SessionStart hook + `scripts/setup-cloud-browser.sh`); why the TLS 1.2 cap, and what to run if it ever fails
 - [chrome-mcp-debug.md](agents/chrome-mcp-debug.md) — Chrome DevTools MCP debugging loop: add breadcrumbs, reproduce, inspect structured snapshots, fix, re-verify
 - [vibe-iframe-inspection.md](agents/vibe-iframe-inspection.md) — reading/measuring a **deployed vibe** inside its cross-origin iframe: `evaluate_script` can't reach the app DOM, but `console.log`→`list_console_messages` and `document.title`→`take_snapshot` do; exact-geometry recipe (box vs text Range) for even-padding checks; the Vibes switch is measurable from the top frame; the raw iframe origin redirects (frame guard) so drive the `/vibe/` route; vibe Tailwind spacing is px-scaled (`px-5`=5px → use `px-[16px]`)
 - [authed-browser-debugging.md](agents/authed-browser-debugging.md) — drive a _logged-in_ Vibes browser for ad-hoc debugging/screenshots in cloud sessions: `clerk-qa-login.mjs --storage` → `clerk-authed-shot.mjs`; why you can't `--cdp` the chrome-devtools MCP browser (pipe transport), route-nav > sidebar cards, wait-for-iframe, never print/commit the storage-state cookie
-- [identity-ship-verify.md](agents/identity-ship-verify.md) — verify a de-fireproof identity/device-id ship on prod with no re-login: browser sign-in + headless `$VIBES_DEVICE_ID` device-id round-trip + driving the interactive `vibes-diy login` CA-callback headlessly (the agent-proxy-rejects-localhost and 5s-redirect-timer gotchas, with the `context.route` → Node `http.get` fix)
 
 ## Team-shared skills
 
