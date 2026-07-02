@@ -9,8 +9,9 @@ import { seedChatSection, type SeedFile } from "./seed-chat-section.js";
 // messages carry `lang` so the reconstructed assistant turn fences the
 // content with the right language hint (```jsx, ```ts, ...). Default to
 // "txt" for unknown extensions — the model still sees the code, just
-// without the language tag.
-function langForFilename(filename: string): string {
+// without the language tag. Exported for fork-app's remix seed, which
+// builds the same SeedFile shape from the source app's filesystem.
+export function langForFilename(filename: string): string {
   const dot = filename.lastIndexOf(".");
   if (dot < 0) return "txt";
   const ext = filename.slice(dot + 1).toLowerCase();

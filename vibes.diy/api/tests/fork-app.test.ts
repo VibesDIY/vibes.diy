@@ -219,6 +219,66 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(codeLines.join("\n")).toContain("hello-clone");
   });
 
+  it("forking a multi-file app seeds every source file and a promptContexts row", async () => {
+    const rSrc = await api.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `import Board from "./components/Board.jsx";\nfunction App() { return <Board />; } App();`,
+        },
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/components/Board.jsx",
+          content: `export default function Board() { return <div>board-marker</div>; }`,
+        },
+        {
+          type: "code-block",
+          lang: "js",
+          filename: "/access.js",
+          content: `export default function (doc) { return { allowAnonymous: true }; }`,
+        },
+      ],
+    });
+    const src = rSrc.Ok();
+    if (!isResEnsureAppSlugOk(src)) assert.fail("Expected ensureAppSlug ok");
+
+    const rFork = await api.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
+    if (rFork.isErr()) assert.fail("forkApp failed: " + JSON.stringify(rFork.Err()));
+    const fork = rFork.Ok();
+
+    // Every source file must land in the seeded ChatSection — entry point
+    // first, the rest in name order — so the first remix prompt sees the
+    // whole app instead of an App.jsx with dangling imports.
+    const sections = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.chatSections)
+      .where(eq(appCtx.vibesCtx.sql.tables.chatSections.chatId, fork.chatId));
+    expect(sections.length).toBe(1);
+    const blocks = sections[0].blocks as { type: string; line?: string; path?: string }[];
+    const codePaths = blocks.filter((b) => b.type === "block.code.begin").map((b) => b.path);
+    expect(codePaths).toEqual(["/App.jsx", "/access.js", "/components/Board.jsx"]);
+    const codeText = blocks
+      .filter((b) => b.type === "block.code.line")
+      .map((b) => b.line ?? "")
+      .join("\n");
+    expect(codeText).toContain("board-marker");
+    expect(codeText).toContain("allowAnonymous");
+
+    // The seed must also link the chat to the source fsId so the first real
+    // turn's loadVersionTimeline resolves the full filesystem (slot messages
+    // + SEARCH/REPLACE seed; untouched files carry forward instead of being
+    // dropped from the next fsId).
+    const pcs = await appCtx.vibesCtx.sql.db
+      .select({ fsId: appCtx.vibesCtx.sql.tables.promptContexts.fsId })
+      .from(appCtx.vibesCtx.sql.tables.promptContexts)
+      .where(eq(appCtx.vibesCtx.sql.tables.promptContexts.chatId, fork.chatId));
+    expect(pcs.map((p) => p.fsId)).toEqual([src.fsId]);
+  });
+
   it("remix-of meta survives a code edit on the fork", async () => {
     const src = await createProdApp("hello-carry-forward");
 
