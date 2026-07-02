@@ -24,11 +24,30 @@ npx vibes-diy pull og/pickathon-picker
 
 ## Architecture notes
 
-- **Database**: Fireproof `"pickathon-festival"` — data lives in the browser, syncs across users via the vibes.diy data plane.
-- **Auth**: `useViewer()` from `use-vibes`. `can("write")` gates all write surfaces. Anonymous users see browse-only (read-only) mode.
-- **Favorites** (`type: "favorite"`) — fetched globally (all users) so super mode can show peer picks and global counts. Keyed `favorite-{userId}-{eventId}`.
-- **Shifts / Notes** (`type: "shift"` / `type: "note"`) — user-scoped via compound Fireproof index `[doc.type, doc.userId]`. Keyed `note-{userId}-{eventId}`, `shift` docs get a random `_id`.
-- **Super mode** — URL easter egg (`?super=true`). Shows `★ N` pick counts in browse and a peer picker in Favorites. Not toggleable from the UI.
+- **Database**: Fireproof `"pickathon"` — data lives in the browser, syncs across users via the vibes.diy data plane. Read access is scoped by `access.js` channels (below), so a client only syncs what it can read.
+- **Auth**: `useViewer()` from `use-vibes`. `can(...)` gates write surfaces. Anonymous users favorite locally (migrated on sign-in); notes/shifts/friends need sign-in.
+- **Channels** (`access.js`):
+  - **Favorites** (`type: "favorite"`, keyed `favorite-{userId}-{eventId}`) → the owner's **`share-{userId}`** channel _and_ the global **`super`** firehose. The owner reads their own via `share-`; friends read them because a **friend edge grants read of each other's `share-` channel**. Nobody is granted `super` — it exists only to be unlocked by a `grant` doc (see below). This is deliberately NOT world-readable: it's what keeps every client from syncing every user's favorites at scale.
+  - **Notes** (`note-{userId}-{eventId}`) → private **`user-{userId}`** channel. Never shared.
+  - **Shifts** → `share-{userId}` if `shareWithFriends`, else private `user-{userId}`. So a friend can see your shared shifts (via the friend grant) but not your private ones.
+  - **Friend edge** (`friend-{owner}-{slug}`) → lives in both `user-` channels (for following/followers lists) and cross-grants each person read of the other's `share-` channel.
+- **Super mode** — URL easter egg (`?super=1` / `?super=true`). Shows `★ N` global pick counts and a peer picker. To see global data you must both (a) open with `?super=1` **and** (b) hold a `super` grant (below) — otherwise the client only has its own + friends' favorites and the counts are friend-scoped.
+
+## Granting super access
+
+The `super` channel (every user's favorites) is unreadable by default. To let a specific
+account read it — e.g. to see true global pick counts — write a **`grant` doc** as an
+admin. Only handles listed in `ADMIN_HANDLES` at the top of `access.js` may write one
+(set that list to your own Vibes handle; it's the handle you're signed in as via the CLI).
+
+```bash
+# Grant <handle> read access to the whole "super" favorites firehose:
+npx vibes-diy db put --vibe og/pickathon-picker --db pickathon \
+  '{"type":"grant","grantTo":"<handle>"}'
+```
+
+The grant takes effect on the grantee's next sync. There's intentionally no UI for this.
+(To revoke, `db del` the grant doc by its `_id` — the grantee loses `super` on re-sync.)
 
 ## Schedule data
 

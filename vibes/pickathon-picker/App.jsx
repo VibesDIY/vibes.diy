@@ -338,17 +338,21 @@ export default function PickathonPicker() {
 
   const { docs: shifts } = useLiveQuery(byTypeUser, { key: ["shift", userId] });
   const { docs: notesDocs } = useLiveQuery(byTypeUser, { key: ["note", userId] });
-  const notes = Object.fromEntries(notesDocs.map((n) => [n.eventId, n.notes]));
+  const notes = useMemo(() => Object.fromEntries(notesDocs.map((n) => [n.eventId, n.notes])), [notesDocs]);
 
   const { docs: allFavorites } = useLiveQuery("type", { key: "favorite" });
 
+  // Global pick counts / leaderboard are only shown in super mode, and they scan every
+  // readable favorite — so don't compute them on normal renders.
   const favCounts = useMemo(() => {
+    if (!superMode) return {};
     const m = {};
     for (const f of allFavorites) m[f.eventId] = (m[f.eventId] || 0) + 1;
     return m;
-  }, [allFavorites]);
+  }, [allFavorites, superMode]);
 
   const favUsers = useMemo(() => {
+    if (!superMode) return [];
     const map = new Map();
     for (const f of allFavorites) {
       const uid = f.userId || "anonymous";
@@ -356,12 +360,13 @@ export default function PickathonPicker() {
       map.get(uid).count++;
     }
     return [...map.values()].sort((a, b) => b.count - a.count);
-  }, [allFavorites]);
+  }, [allFavorites, superMode]);
 
-  const myFavorites = allFavorites.filter((f) => (f.userId || "anonymous") === userId);
   // useFireproof applies the write optimistically, so useLiveQuery already reflects a
-  // toggle before the server confirms — no app-side overlay needed.
-  const myFavIds = new Set(myFavorites.map((f) => f.eventId));
+  // toggle before the server confirms — no app-side overlay needed. Memoized so a stable
+  // Set/array identity doesn't re-render every child on unrelated state changes.
+  const myFavorites = useMemo(() => allFavorites.filter((f) => (f.userId || "anonymous") === userId), [allFavorites, userId]);
+  const myFavIds = useMemo(() => new Set(myFavorites.map((f) => f.eventId)), [myFavorites]);
 
   const { docs: friends } = useLiveQuery(byTypeUser, { key: ["friend", userId] });
   const { docs: friendedBy } = useLiveQuery(byTypeFriendSlug, { key: ["friend", userId] });
@@ -411,18 +416,21 @@ export default function PickathonPicker() {
     return allShifts.filter((s) => (s.userId || "anonymous") === selectedFriend && s.shareWithFriends);
   }, [selectedFriend, allShifts]);
 
-  const eventDays = [...new Set(events.map((e) => e.day))];
-  const shiftDays = [...new Set(shifts.map((s) => s.day))];
-  const allDays = [...new Set([...FESTIVAL_2026.dayOrder, ...eventDays, ...shiftDays])];
-  const displayDays = allDays.sort((a, b) => {
+  // Only days that actually have events or shifts, ordered by the festival day order.
+  // We deliberately do NOT seed with the full dayOrder — a festival day with nothing on
+  // it (e.g. Monday) shouldn't show up in the picker or as an empty section.
+  const displayDays = useMemo(() => {
+    const present = new Set([...events.map((e) => e.day), ...shifts.map((s) => s.day)].filter(Boolean));
     const o = FESTIVAL_2026.dayOrder;
-    const ai = o.indexOf(a),
-      bi = o.indexOf(b);
-    if (ai === -1 && bi === -1) return 0;
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
+    return [...present].sort((a, b) => {
+      const ai = o.indexOf(a),
+        bi = o.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }, [events, shifts]);
 
   const {
     doc: shiftForm,
@@ -500,13 +508,18 @@ export default function PickathonPicker() {
   );
   const nextSets = useMemo(() => upNextSets(events, nowTick), [events, nowTick]);
 
-  const filteredEvents = events
-    .filter((e) => e.title.toLowerCase().includes(searchTerm.toLowerCase()) && (selectedDay === "all" || e.day === selectedDay))
-    .sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
+  const filteredEvents = useMemo(
+    () =>
+      events
+        .filter((e) => e.title.toLowerCase().includes(searchTerm.toLowerCase()) && (selectedDay === "all" || e.day === selectedDay))
+        .sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start)),
+    [events, searchTerm, selectedDay]
+  );
 
-  const favoriteEvents = events
-    .filter((e) => myFavIds.has(e.eventId))
-    .sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
+  const favoriteEvents = useMemo(
+    () => events.filter((e) => myFavIds.has(e.eventId)).sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start)),
+    [events, myFavIds]
+  );
 
   const makeSchedule = (day) => {
     const ev = favoriteEvents.filter((e) => festivalDayFor(e.start) === day);
