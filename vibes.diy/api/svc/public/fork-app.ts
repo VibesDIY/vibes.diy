@@ -11,9 +11,9 @@ import {
   FileSystemItem,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
-  isFetchOkResult,
   isCachedSuggestionKeyShape,
 } from "@vibes.diy/api-types";
+import type { FileSystemRef, PromptContextSql } from "@vibes.diy/call-ai-v2";
 import { type } from "arktype";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { selectLatestAppPerSlug } from "./select-app.js";
@@ -28,7 +28,9 @@ import { bumpAppRecency } from "../intern/bump-app-recency.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
-import { seedChatSection } from "../intern/seed-chat-section.js";
+import { seedChatSection, type SeedFile } from "../intern/seed-chat-section.js";
+import { langForFilename } from "../intern/ensure-push-seeded-chat.js";
+import { resolveVfsFromFileSystem } from "../intern/version-timeline.js";
 import { publishAccessBindings } from "../intern/process-access-bindings.js";
 
 function sanitizeSlug(raw: string): string {
@@ -294,30 +296,76 @@ export async function forkApp(
     vctx.logger.Warn().Err(rBump).Msg("bumpAppRecency failed");
   }
 
-  // 7. Seed a ChatSection that mirrors a real prompt turn — a synthetic user
-  //    message + the source /App.jsx as an assistant code block, block.end
-  //    pinning fsRef to srcFsId. Runs for both remix and clone: a cloner who
+  // 7. Seed the fork's chat, mirroring ensurePushSeededChat (the `vibes-diy
+  //    push` first-push seed). Runs for both remix and clone: a cloner who
   //    later clicks Edit lands in the chat editor with the source in scope
-  //    (#1781), so the next LLM prompt sees the current code via
-  //    reconstructConversationMessages instead of starting from scratch.
+  //    (#1781). Two rows:
+  //
+  //    a. A PromptContexts row linking chatId → src.fsId, so the first real
+  //       turn's `loadVersionTimeline` resolves the FULL source filesystem —
+  //       slot messages carry the current file state and SEARCH/REPLACE
+  //       blocks anchor against it. Without it the timeline is empty: the
+  //       streaming resolver composes against an empty buffer and every
+  //       source file the model doesn't re-emit is silently dropped from
+  //       the fork's next fsId.
+  //    b. A ChatSection that mirrors a real prompt turn — a synthetic user
+  //       message + ALL source files as assistant code blocks (entry point
+  //       first), block.end pinning fsRef to srcFsId. Seeding only App.jsx
+  //       here left a multi-file remix's imports dangling, so the model
+  //       declared the other modules missing and rebuilt from scratch.
   const fsItems = src.fileSystem as FileSystemItem[];
   const srcEntry = fsItems.find((f) => f.entryPoint && f.fileName === "/App.jsx") ?? fsItems.find((f) => f.fileName === "/App.jsx");
   if (srcEntry) {
-    const rFetch = await vctx.storage.fetch(srcEntry.assetURI);
-    if (!isFetchOkResult(rFetch)) {
+    const vfs = await resolveVfsFromFileSystem(vctx, fsItems);
+    const entryKey = srcEntry.fileName.startsWith("/") ? srcEntry.fileName : `/${srcEntry.fileName}`;
+    // resolveVfsFromFileSystem skips unfetchable files silently; the entry
+    // point is the one file a seeded chat is useless without, so keep the
+    // pre-existing hard error when it can't be read.
+    if (!vfs.has(entryKey)) {
       return Result.Err(`fork-fetch-app-jsx: ${srcEntry.fileName} (${srcEntry.assetURI})`);
     }
-    const content = await new Response(rFetch.data as unknown as BodyInit).text();
+    // `/~~calculated~~/` files (the generated import map) are server-derived
+    // artifacts rebuilt on every write — the push seed never carries them
+    // (it seeds from the client's files), so keep them out here too.
+    const restPaths = [...vfs.keys()].filter((p) => p !== entryKey && !p.startsWith("/~~calculated~~/")).sort();
+    const seedFiles: SeedFile[] = [entryKey, ...restPaths].map((path) => ({
+      path,
+      lang: langForFilename(path),
+      content: vfs.get(path) ?? "",
+    }));
     const promptId = vctx.sthis.nextId(12).str;
     const blockId = vctx.sthis.nextId(12).str;
+    const now = new Date();
+    const fsRef: FileSystemRef = { appSlug: destAppSlug, ownerHandle: destUserSlug, mode: destMode, fsId: src.fsId };
+    const refValue: PromptContextSql = {
+      type: "prompt.usage.sql",
+      usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
+      fsRef,
+    };
+    const rPC = await exception2Result(() =>
+      vctx.sql.db.insert(vctx.sql.tables.promptContexts).values({
+        userId,
+        chatId,
+        promptId,
+        fsId: src.fsId,
+        nethash: vctx.netHash(),
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        ref: refValue,
+        created: now.toISOString(),
+      })
+    );
+    if (rPC.isErr()) return Result.Err(`Failed to insert fork promptContext: ${rPC.Err().message}`);
     const rSeed = await seedChatSection(vctx, {
       chatId,
       promptId,
       blockId,
       streamId: blockId,
       userText: `${skipChat ? "Clone" : "Remix"} of ${src.ownerHandle}/${src.appSlug}`,
-      files: [{ path: srcEntry.fileName, lang: "jsx", content }],
-      fsRef: { appSlug: destAppSlug, ownerHandle: destUserSlug, mode: destMode, fsId: src.fsId },
+      files: seedFiles,
+      fsRef,
+      timestamp: now,
     });
     if (rSeed.isErr()) return Result.Err(rSeed);
   }
