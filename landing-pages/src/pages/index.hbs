@@ -2,7 +2,7 @@
 {
   "layout": "standard",
   "title": "Vibes DIY | Build Something Special",
-  "description": "Little apps for real situations — from the group chat to the front counter. Take orders, kill the spreadsheet, run the league. Live, cloneable, and yours.",
+  "description": "Make a real web app just by describing it — live instantly, shared with a link, changed by talking to it. Read the blog, learn to build, and browse 760+ live example apps.",
   "ogUrl": "https://good.vibes.diy/",
   "source": "homepage"
 }
@@ -17,15 +17,11 @@
             --goldenrod: #FEDD00;
             --ruby: #DA291C;
             --bluey: #009ACE;
-            --sprout-green: #16A34A;
-            --tube-red: #FF0033;
-            --puppy-pink: #FF70A6;
-            --circuit-green: #00C853;
-            --stadium-blue: #1E5AA8;
-            --stadium-blue-soft: #f0f6ff;
             --ivory: #FFFFF0;
             --black: #231F20;
             --white: #FFFFFF;
+            --forest: #2D7A4F;
+            --violet: #6B3FA0;
             --grid-line: rgba(255, 255, 255, 0.5);
         }
 
@@ -88,20 +84,18 @@
             position: relative;
         }
         .index-hero h1 {
-            font-size: clamp(3rem, 7vw, 5.5rem);
+            font-size: clamp(2.6rem, 6.5vw, 5rem);
             font-weight: bold;
             line-height: 1.0;
             letter-spacing: -0.03em;
             margin-bottom: 1.25rem;
             position: relative;
         }
-        .index-hero h1 .hi {
-            color: var(--goldenrod);
-        }
+        .index-hero h1 .hi { color: var(--goldenrod); }
         .index-hero p {
             font-size: 1.2rem;
-            opacity: 0.7;
-            max-width: 520px;
+            opacity: 0.75;
+            max-width: 620px;
             position: relative;
         }
         .hero-badge-row {
@@ -138,272 +132,224 @@
         }
         .section-hdr::before { content: "// "; }
 
-        /* ── Collection cards (featured live-app pages) ── */
-        .collections-grid {
+        /* ── The three lanes ── */
+        .lanes-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
         }
-        .collection-card {
+        @media (max-width: 900px) { .lanes-grid { grid-template-columns: 1fr; } }
+        .lane-card {
             background: var(--white);
-            border-radius: 16px;
-            border: 2px solid var(--black);
+            border-radius: 18px;
+            border: 3px solid var(--black);
             text-decoration: none;
             color: var(--black);
             display: flex;
             flex-direction: column;
             overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 4px 4px 0 var(--black);
-        }
-        .collection-card:hover {
-            transform: translate(-2px, -2px);
             box-shadow: 6px 6px 0 var(--black);
         }
-        .collection-card-accent {
-            height: 6px;
+        .lane-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0 var(--black);
         }
-        .collection-card-body {
-            padding: 1.5rem;
+        .lane-shot {
+            display: block;
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            object-position: top left;
+            border-bottom: 3px solid var(--black);
+            background: var(--black);
+        }
+        .lane-body {
+            padding: 1.75rem 1.75rem 1.5rem;
             flex: 1;
             display: flex;
             flex-direction: column;
         }
-        .collection-card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.75rem;
-        }
-        .collection-card-icon {
-            font-size: 1.75rem;
-            line-height: 1;
-        }
-        .collection-badge {
-            font-size: 0.65rem;
-            letter-spacing: 0.1em;
+        .lane-kicker {
+            font-family: monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.2em;
             text-transform: uppercase;
-            padding: 0.3rem 0.65rem;
-            border-radius: 50px;
-            border: 2px solid;
-            font-weight: 600;
-            white-space: nowrap;
+            margin-bottom: 0.6rem;
         }
-        .collection-card h2 {
-            font-size: 1.25rem;
+        .lane-card h2 {
+            font-size: 1.6rem;
             font-weight: bold;
-            margin-bottom: 0.4rem;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 0.6rem;
         }
-        .collection-card p {
-            font-size: 0.9rem;
-            color: var(--os-gray);
-            line-height: 1.45;
+        .lane-card p {
+            font-size: 0.95rem;
+            color: #4a4a4a;
+            line-height: 1.55;
             flex: 1;
         }
-        .collection-cta {
+        .lane-cta {
             display: inline-block;
             margin-top: 1.25rem;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        .lane-blog    .lane-kicker, .lane-blog    .lane-cta { color: var(--bluey); }
+        .lane-docs    .lane-kicker, .lane-docs    .lane-cta { color: var(--forest); }
+        .lane-catalog .lane-kicker, .lane-catalog .lane-cta { color: var(--ruby); }
+
+        .lane-sublinks {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.25rem 2rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .lane-sublinks .sub-label {
+            font-family: monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+            margin-right: 0.25rem;
+        }
+        .sub-chip {
+            background: var(--white);
+            border: 2px solid var(--black);
+            border-radius: 50px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.8rem;
             font-weight: 600;
             text-decoration: none;
+            color: var(--black);
+            transition: background 0.15s ease;
         }
+        .sub-chip:hover { background: var(--goldenrod); }
 
-        /* Collection card accent colors */
-        .cc-teal   .collection-card-accent { background: #00B4A0; }
-        .cc-teal   .collection-badge { background: #e6faf8; border-color: #00B4A0; color: #006b62; }
-        .cc-teal   .collection-cta { color: #00B4A0; }
+        /* ── Prose panel ── */
+        .prose-panel {
+            background: var(--ivory);
+            border: 3px solid var(--black);
+            border-radius: 20px;
+            box-shadow: 6px 6px 0 var(--black);
+            padding: 2.5rem 2.75rem;
+        }
+        .prose-panel h2 {
+            font-size: 1.75rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+        .prose-panel p {
+            font-size: 1.02rem;
+            line-height: 1.7;
+            max-width: 760px;
+            margin-bottom: 0.9rem;
+        }
+        .prose-panel p:last-child { margin-bottom: 0; }
+        .prose-panel a { color: var(--bluey); font-weight: 600; text-decoration: none; }
+        .prose-panel a:hover { text-decoration: underline; }
 
-        .cc-acid   .collection-card-accent { background: #c8b800; }
-        .cc-acid   .collection-badge { background: #fffde6; border-color: #c8b800; color: #6b6000; }
-        .cc-acid   .collection-cta { color: #a09000; }
-
-        .cc-forest .collection-card-accent { background: #2D7A4F; }
-        .cc-forest .collection-badge { background: #e8f5ee; border-color: #2D7A4F; color: #1a4a2e; }
-        .cc-forest .collection-cta { color: #2D7A4F; }
-
-        .cc-ruby   .collection-card-accent { background: #DA291C; }
-        .cc-ruby   .collection-badge { background: #fff0f0; border-color: #DA291C; color: #9a1000; }
-        .cc-ruby   .collection-cta { color: #DA291C; }
-
-        .cc-rank   .collection-card-accent { background: #e5484d; }
-        .cc-rank   .collection-badge { background: #fdecec; border-color: #e5484d; color: #9a1f22; }
-        .cc-rank   .collection-cta { color: #e5484d; }
-
-        .cc-signal .collection-card-accent { background: #c0440a; }
-        .cc-signal .collection-badge { background: #fdf0ea; border-color: #c0440a; color: #7a2800; }
-        .cc-signal .collection-cta { color: #c0440a; }
-
-        .cc-orange .collection-card-accent { background: #FF6B00; }
-        .cc-orange .collection-badge { background: #fff3e6; border-color: #FF6B00; color: #8a3800; }
-        .cc-orange .collection-cta { color: #FF6B00; }
-
-        .cc-bluey  .collection-card-accent { background: #009ACE; }
-        .cc-bluey  .collection-badge { background: #e6f6ff; border-color: #009ACE; color: #005a7a; }
-        .cc-bluey  .collection-cta { color: #009ACE; }
-
-        .cc-green  .collection-card-accent { background: #4ade80; }
-        .cc-green  .collection-badge { background: #f0fff4; border-color: #4ade80; color: #166534; }
-        .cc-green  .collection-cta { color: #16a34a; }
-
-        .cc-tomato .collection-card-accent { background: #d4321a; }
-        .cc-tomato .collection-badge { background: #fdf0ee; border-color: #d4321a; color: #7a1800; }
-        .cc-tomato .collection-cta { color: #d4321a; }
-
-        .cc-amber  .collection-card-accent { background: #c9952a; }
-        .cc-amber  .collection-badge { background: #fdf5e6; border-color: #c9952a; color: #7a5500; }
-        .cc-amber  .collection-cta { color: #a07020; }
-
-        .cc-ink    .collection-card-accent { background: #1a1814; }
-        .cc-ink    .collection-badge { background: #f5efe2; border-color: #1a1814; color: #1a1814; }
-        .cc-ink    .collection-cta { color: #b3261e; }
-
-        .cc-violet .collection-card-accent { background: #6B3FA0; }
-        .cc-violet .collection-badge { background: #f0e8fa; border-color: #6B3FA0; color: #42226b; }
-        .cc-violet .collection-cta { color: #6B3FA0; }
-
-        .cc-pitch   .collection-card-accent { background: #006233; }
-        .cc-fairway .collection-card-accent { background: #2d6a2d; }
-        .cc-blitz   .collection-card-accent { background: #C8102E; }
-
-        /* ── Audience cards (existing pattern) ── */
-        .cards-container {
+        /* ── Fun / Done / Alive ── */
+        .triple-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.25rem;
         }
-        .landing-card {
+        @media (max-width: 760px) { .triple-row { grid-template-columns: 1fr; } }
+        .triple-cell {
             background: var(--white);
+            border: 2px solid var(--black);
             border-radius: 16px;
-            padding: 2rem 1.75rem;
-            text-decoration: none;
-            color: inherit;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            border: 2px solid transparent;
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.08);
+            padding: 1.75rem;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.12);
         }
-        .landing-card:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0 var(--black);
-        }
-
-        .landing-card.valentines      { border-color: var(--ruby); }
-        .landing-card.valentines:hover { background: linear-gradient(135deg, #fff 0%, #fff5f5 100%); }
-        .landing-card.teachers        { border-color: var(--bluey); }
-        .landing-card.teachers:hover  { background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%); }
-        .landing-card.homeschoolers   { border-color: var(--sprout-green); }
-        .landing-card.homeschoolers:hover { background: linear-gradient(135deg, #fff 0%, #f1fff5 100%); }
-        .landing-card.coaches         { border-color: var(--stadium-blue); }
-        .landing-card.coaches:hover   { background: linear-gradient(135deg, #fff 0%, var(--stadium-blue-soft) 100%); }
-        .landing-card.hotwheels       { border-color: #FF6B00; }
-        .landing-card.hotwheels:hover { background: linear-gradient(135deg, #fff 0%, #fff5eb 100%); }
-        .landing-card.fashion-photographers { border-color: #D4902A; }
-        .landing-card.fashion-photographers:hover { background: linear-gradient(135deg, #fff 0%, #fdf6e3 100%); }
-        .landing-card.organizers      { border-color: #2E8B57; }
-        .landing-card.organizers:hover { background: linear-gradient(135deg, #fff 0%, #f0fff4 100%); }
-        .landing-card.wedding         { border-color: #C9646A; }
-        .landing-card.wedding:hover   { background: linear-gradient(135deg, #fff 0%, #fff0f0 100%); }
-        .landing-card.builders        { border-color: var(--bluey); }
-        .landing-card.builders:hover  { background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%); }
-        .landing-card.youtubers       { border-color: var(--tube-red); }
-        .landing-card.youtubers:hover { background: linear-gradient(135deg, #fff 0%, #fff0f3 100%); }
-        .landing-card.contractors     { border-color: var(--goldenrod); }
-        .landing-card.contractors:hover { background: linear-gradient(135deg, #fff 0%, #fffeec 100%); }
-        .landing-card.puppies         { border-color: var(--puppy-pink); }
-        .landing-card.puppies:hover   { background: linear-gradient(135deg, #fff 0%, #fff0f7 100%); }
-        .landing-card.reshippers      { border-color: var(--circuit-green); }
-        .landing-card.reshippers:hover { background: linear-gradient(135deg, #fff 0%, #f0fff7 100%); }
-        .landing-card.engineers       { border-color: #7c6aff; }
-        .landing-card.engineers:hover { background: linear-gradient(135deg, #fff 0%, #f0eeff 100%); }
-        .landing-card.bike-summer     { border-color: #e83d6f; }
-        .landing-card.bike-summer:hover { background: linear-gradient(135deg, #fff 0%, #fff0f3 100%); }
-        .landing-card.vibes-connect   { border-color: #34d399; }
-        .landing-card.vibes-connect:hover { background: linear-gradient(135deg, #fff 0%, #ecfdf5 100%); }
-        .landing-card.creator-docs    { border-color: #4ade80; }
-        .landing-card.creator-docs:hover { background: linear-gradient(135deg, #fff 0%, #f0fff4 100%); }
-        .landing-card.psych           { border-color: #c89010; }
-        .landing-card.psych:hover     { background: linear-gradient(135deg, #fff 0%, #fffaeb 100%); }
-        .landing-card.babylon-3d      { border-color: var(--ruby); }
-        .landing-card.babylon-3d:hover { background: linear-gradient(135deg, #fff 0%, #fff0ef 100%); }
-        .landing-card.music-studio    { border-color: #d4820a; }
-        .landing-card.music-studio:hover { background: linear-gradient(135deg, #fff 0%, #fffbf0 100%); }
-        .landing-card.sharing      { border-color: #22d3ee; }
-        .landing-card.sharing:hover { background: linear-gradient(135deg, #fff 0%, #ecfeff 100%); }
-        .landing-card.bridesmaids     { border-color: #FF3E6C; }
-        .landing-card.bridesmaids:hover { background: linear-gradient(135deg, #fff 0%, #fff0f5 100%); }
-        .landing-card.save-the-date   { border-color: #1A2744; }
-        .landing-card.save-the-date:hover { background: linear-gradient(135deg, #fff 0%, #f0f2f8 100%); }
-        .landing-card.wishlist        { border-color: #FF6348; }
-        .landing-card.wishlist:hover  { background: linear-gradient(135deg, #fff 0%, #fff2f0 100%); }
-        .landing-card.garage-sale     { border-color: #c8102e; }
-        .landing-card.garage-sale:hover { background: linear-gradient(135deg, #fff 0%, #fff0f0 100%); }
-        .landing-card.growth-writers  { border-color: #58a6ff; }
-        .landing-card.growth-writers:hover { background: linear-gradient(135deg, #fff 0%, #eef4ff 100%); }
-        .landing-card.wyr             { border-color: #ff2d78; }
-        .landing-card.wyr:hover       { background: linear-gradient(135deg, #fff 0%, #fff0f5 100%); }
-        .landing-card.philosophy      { border-color: #3B2F8C; }
-        .landing-card.philosophy:hover { background: linear-gradient(135deg, #fff 0%, #f0eeff 100%); }
-        .landing-card.summer-camp     { border-color: #e8621a; }
-        .landing-card.summer-camp:hover { background: linear-gradient(135deg, #fff 0%, #fff5eb 100%); }
-        .landing-card.church-summer   { border-color: #e8a42a; }
-        .landing-card.church-summer:hover { background: linear-gradient(135deg, #fff 0%, #fffbf0 100%); }
-        .landing-card.pta-pto         { border-color: #d92b2b; }
-        .landing-card.pta-pto:hover   { background: linear-gradient(135deg, #fff 0%, #fff5f5 100%); }
-        .landing-card.block-party     { border-color: #f5c023; }
-        .landing-card.block-party:hover { background: linear-gradient(135deg, #fff 0%, #fffef0 100%); }
-        .landing-card.tailgate        { border-color: #e8a020; }
-        .landing-card.tailgate:hover  { background: linear-gradient(135deg, #fff 0%, #fffbf0 100%); }
-        .landing-card.rec-league      { border-color: #a8e63c; }
-        .landing-card.rec-league:hover { background: linear-gradient(135deg, #fff 0%, #f5fff0 100%); }
-        .landing-card.zine            { border-color: #c8e020; }
-        .landing-card.zine:hover      { background: linear-gradient(135deg, #fff 0%, #faffd9 100%); }
-        .landing-card.free-library    { border-color: #2D6A4F; }
-        .landing-card.free-library:hover { background: linear-gradient(135deg, #fff 0%, #f0fff6 100%); }
-        .landing-card.group-chat      { border-color: #d97706; }
-        .landing-card.group-chat:hover { background: linear-gradient(135deg, #fff 0%, #fffbeb 100%); }
-        .landing-card.camping     { border-color: #1E3D1A; }
-        .landing-card.camping:hover { background: linear-gradient(135deg, #fff 0%, #f0f5ee 100%); }
-        .landing-card.road-trip       { border-color: #C45C2A; }
-        .landing-card.road-trip:hover { background: linear-gradient(135deg, #fff 0%, #fff5ec 100%); }
-        .landing-card.crew-chaos      { border-color: #ff4d00; }
-        .landing-card.crew-chaos:hover { background: linear-gradient(135deg, #fff 0%, #fff3eb 100%); }
-        .landing-card.crew-list       { border-color: #2563eb; }
-        .landing-card.crew-list:hover { background: linear-gradient(135deg, #fff 0%, #eef4ff 100%); }
-        .landing-card.crew-bit        { border-color: #a855f7; }
-        .landing-card.crew-bit:hover  { background: linear-gradient(135deg, #fff 0%, #f5f0ff 100%); }
-        .landing-card.the-booth       { border-color: #ff9e00; }
-        .landing-card.the-booth:hover { background: linear-gradient(135deg, #fff 0%, #fff6e6 100%); }
-        .landing-card.built           { border-color: var(--black); }
-        .landing-card.built:hover     { background: linear-gradient(135deg, #fff 0%, #f4f4f0 100%); }
-        .landing-card.blog            { border-color: var(--bluey); }
-        .landing-card.blog:hover      { background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%); }
-
-        .card-icon {
-            font-size: 2rem;
-            margin-bottom: 0.75rem;
-            line-height: 1;
-        }
-        .card-icon svg { width: 2rem; height: 2rem; display: block; }
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 0.35rem;
-            letter-spacing: -0.01em;
-        }
-        .card-description {
-            font-size: 0.9rem;
+        .triple-cell .cell-num {
+            font-family: monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
             color: var(--os-gray);
-            line-height: 1.45;
-            flex: 1;
+            margin-bottom: 0.5rem;
         }
-        .card-cta {
+        .triple-cell h3 {
+            font-size: 1.35rem;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.4rem;
+        }
+        .triple-cell p {
+            font-size: 0.92rem;
+            color: #4a4a4a;
+            line-height: 1.55;
+        }
+
+        /* ── Two lanes: group chat / front counter ── */
+        .two-lane {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        @media (max-width: 760px) { .two-lane { grid-template-columns: 1fr; } }
+        .lane-half {
+            border: 3px solid var(--black);
+            border-radius: 18px;
+            padding: 2rem;
+            box-shadow: 5px 5px 0 var(--black);
+        }
+        .lane-half.chat    { background: #fffde6; }
+        .lane-half.counter { background: #e6f6ff; }
+        .lane-half h3 {
+            font-size: 1.45rem;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+        }
+        .lane-half > p {
+            font-size: 0.95rem;
+            color: #4a4a4a;
+            margin-bottom: 1rem;
+        }
+        .lane-half ul { list-style: none; }
+        .lane-half li {
+            font-size: 0.92rem;
+            padding: 0.45rem 0;
+            border-top: 1px solid rgba(0,0,0,0.12);
+            line-height: 1.5;
+        }
+        .lane-half li strong { font-weight: 700; }
+
+        .trust-strip {
             margin-top: 1.25rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--black);
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            font-size: 0.98rem;
+            line-height: 1.65;
+        }
+        .trust-strip strong { color: var(--goldenrod); }
+
+        /* ── Pull quote ── */
+        .pull-quote {
+            text-align: center;
+            padding: 1rem 2rem 0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .pull-quote blockquote {
+            font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+            font-weight: bold;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .pull-quote .attribution {
+            margin-top: 0.5rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--os-gray);
         }
 
         /* Footer */
@@ -438,7 +384,7 @@
 
         @media (max-width: 640px) {
             .index-hero-inner { padding: 2.5rem 1.75rem; }
-            .collections-grid { grid-template-columns: 1fr; }
+            .prose-panel { padding: 2rem 1.5rem; }
         }
     </style>
 
@@ -446,645 +392,131 @@
     <!-- ── Hero masthead ── -->
     <section class="index-hero">
         <div class="index-hero-inner">
-            <div class="hero-overline">VIBES.DIY</div>
-            <h1>Build Something<br><span class="hi">Special.</span></h1>
-            <p>Little apps for real situations — from the group chat to the front counter. Take the order, kill the spreadsheet, run the league. Made here. Live now. Remix anything you find.</p>
+            <div class="hero-overline">GOOD.VIBES.DIY — THE VIBES SHOWCASE</div>
+            <h1>Software is getting<br><span class="hi">weird</span> again.</h1>
+            <p>Vibes lets you make a real web app just by describing it — it's live instantly, you share it with a link, and you keep changing it by talking to it. This site is the public record of what that looks like: the blog, the builder's docs, and a catalog of hundreds of live apps. Everything here is cloneable and yours.</p>
             <div class="hero-badge-row">
-                <span class="hero-badge">90+ live apps</span>
+                <span class="hero-badge">760+ apps live</span>
                 <span class="hero-badge">Takes orders</span>
-                <span class="hero-badge">Remix any app</span>
+                <span class="hero-badge">Remix anything</span>
+                <span class="hero-badge">Open source</span>
             </div>
         </div>
     </section>
 
-    <!-- ── Edu Syllabi Compendium (featured) ── -->
-    <section class="index-section" style="padding-bottom:0;">
-        <div class="section-hdr">New: Edu Research Compendium</div>
-        <a href="edu/syllabi.html" style="display:block;background:var(--black);color:var(--ivory);border-radius:16px;padding:2rem 2.5rem;text-decoration:none;border:3px solid var(--black);box-shadow:6px 6px 0 #555;transition:transform 0.2s ease,box-shadow 0.2s ease;margin-bottom:0.5rem;" onmouseover="this.style.transform='translate(-2px,-2px)';this.style.boxShadow='8px 8px 0 #555'" onmouseout="this.style.transform='';this.style.boxShadow='6px 6px 0 #555'">
-            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-                <div style="font-size:2rem;">🎓</div>
-                <div style="flex:1;min-width:200px;">
-                    <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;font-family:monospace;margin-bottom:0.3rem;">90 syllabi · 15 institutions · STEM + Humanities</div>
-                    <div style="font-size:1.5rem;font-weight:700;line-height:1.2;">University Syllabus Compendium</div>
-                    <div style="font-size:0.95rem;color:#ccc;margin-top:0.4rem;">Browse real course syllabi from MIT, Stanford, UC Berkeley, and more — filterable by domain and keyword. The research corpus behind 65+ educational app prompts.</div>
+    <!-- ── The three lanes ── -->
+    <section class="index-section">
+        <div class="section-hdr">Start Here</div>
+        <div class="lanes-grid">
+
+            <a href="blog/" class="lane-card lane-blog">
+                <img class="lane-shot" src="images/blog/group-chat-to-front-counter/card.png" alt="Blog post card: from the group chat to the front counter" loading="lazy">
+                <div class="lane-body">
+                    <div class="lane-kicker">01 · Field Notes</div>
+                    <h2>The Blog</h2>
+                    <p>Dispatches from the build log — evals of the app generator, positioning notes, and engineering stories from a team shipping in public. Latest: every vibe just got a backend.</p>
+                    <span class="lane-cta">Read the Blog →</span>
                 </div>
-                <span style="white-space:nowrap;font-size:0.9rem;font-weight:600;color:var(--goldenrod);">Browse the Corpus →</span>
+            </a>
+
+            <a href="creator-documentation/" class="lane-card lane-docs">
+                <img class="lane-shot" src="images/screenshots/creator-documentation.jpg" alt="Creator documentation: build, script, and ship" loading="lazy">
+                <div class="lane-body">
+                    <div class="lane-kicker">02 · Build, Script, Ship</div>
+                    <h2>Builder's Docs</h2>
+                    <p>Guides for making a vibe of your own: prompt-to-app walkthroughs, the one-command CLI, connecting backend data, and the full sharing &amp; access reference. Every app on this site started from a prompt — these show you how.</p>
+                    <span class="lane-cta">Read the Docs →</span>
+                </div>
+            </a>
+
+            <a href="apps.html" class="lane-card lane-catalog">
+                <img class="lane-shot" src="images/screenshots/group-ranker.jpg" alt="Group Ranker, one of the live app collections in the catalog" loading="lazy">
+                <div class="lane-body">
+                    <div class="lane-kicker">03 · The Gallery</div>
+                    <h2>The App Catalog</h2>
+                    <p>The full example gallery — live app collections, audience pages for teachers and food trucks, games and puzzles, and university-grounded edu clusters. Nothing here is a mockup. Open one, then remix it.</p>
+                    <span class="lane-cta">Browse the Catalog →</span>
+                </div>
+            </a>
+
+        </div>
+        <div class="lane-sublinks">
+            <span class="sub-label">Builder shortcuts:</span>
+            <a class="sub-chip" href="generate.html">CLI: npx vibes-diy generate</a>
+            <a class="sub-chip" href="sharing.html">Sharing &amp; Access</a>
+            <a class="sub-chip" href="vibes-connect/">Vibes Connect</a>
+            <a class="sub-chip" href="builders.html">For Builders</a>
+            <a class="sub-chip" href="built.html">How It Gets Built</a>
+        </div>
+    </section>
+
+    <!-- ── What is Vibes ── -->
+    <section class="index-section">
+        <div class="section-hdr">What Is Vibes DIY</div>
+        <div class="prose-panel">
+            <h2>Tiny software for your specific situation</h2>
+            <p>Vibes DIY is for making tiny custom software — things built for your specific situation, your specific people. A trivia night for the group chat, or an order form for the shop. The same move either way: describe it, it's live at a link, and you keep changing it by talking to it. Nobody starts from a blank page, and nobody has to call themselves a coder.</p>
+            <p>good.vibes.diy is the public gallery of what people are making with it. The <a href="apps.html">catalog</a> collects hundreds of live apps for their night, their league, their shop, their weird specific thing. Every one is deployed on the <a href="https://links.vibes.diy/homepage">Vibes DIY platform</a> — not a mockup, not a prototype. If you see something close to what you need, clone it and make it yours.</p>
+        </div>
+    </section>
+
+    <!-- ── Fun, done, alive ── -->
+    <section class="index-section">
+        <div class="section-hdr">The Whole Pitch</div>
+        <div class="triple-row">
+            <div class="triple-cell">
+                <div class="cell-num">01</div>
+                <h3>Fun</h3>
+                <p>Build for any reason, or no reason. A bit for the group chat, a game for the kids — or because the spreadsheet is killing you.</p>
             </div>
-        </a>
-    </section>
-
-    <!-- ── Live App Collections ── -->
-    <section class="index-section">
-        <div class="section-hdr">Live App Collections</div>
-        <div class="collections-grid">
-
-            <a href="hamburger-business-review.html" class="collection-card cc-ink">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🍔</div>
-                        <span class="collection-badge">7 filings</span>
-                    </div>
-                    <h2>Hamburger Business Review</h2>
-                    <p>A 10-K parody for your order, an every-store completionist tracker, a couple-compatibility burger scorer, a mascot lore archive, a kiosk-vs-human ledger, a franchise field guide, and a global menu passport.</p>
-                    <span class="collection-cta">File a 10-K →</span>
-                </div>
-            </a>
-
-            <a href="group-ranker.html" class="collection-card cc-rank">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🏆</div>
-                        <span class="collection-badge">7 apps live</span>
-                    </div>
-                    <h2>Group Ranker</h2>
-                    <p>Best taco, most overrated city, top southern rock album, and four more. Seven consensus tier-list rankers — send one link, the whole group chat votes, the room settles it live.</p>
-                    <span class="collection-cta">Settle It Live →</span>
-                </div>
-            </a>
-
-            <a href="creators.html" class="collection-card cc-amber">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">✍️</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>For Knowledge Creators</h2>
-                    <p>Pricing calculator, course outline builder, launch waitlist, lead magnet quiz, student Q&amp;A board. Five tools for ebook authors, newsletter operators, and course sellers.</p>
-                    <span class="collection-cta">Sell What You Know →</span>
-                </div>
-            </a>
-
-            <a href="food-trucks.html" class="collection-card cc-tomato">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🍳</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>Food Trucks &amp; Restaurants</h2>
-                    <p>Daily specials board, catering intake, prep checklist, loyalty card, location ping. Five tools for the people behind the counter.</p>
-                    <span class="collection-cta">Open for Business →</span>
-                </div>
-            </a>
-
-            <a href="volunteer-coordinators.html" class="collection-card cc-signal">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-                        </div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>Volunteer Coordinators</h2>
-                    <p>Shift sign-ups, check-in kiosks, hours logs, roster builders, onboarding forms. Five tools for the people running the operation.</p>
-                    <span class="collection-cta">Coordinate Better →</span>
-                </div>
-            </a>
-
-            <a href="accountability.html" class="collection-card cc-forest">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">⟳</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>Accountability Partners</h2>
-                    <p>Cohort, Staked, Post, Letters, Pod. Five takes on finding the right person to do the hard thing with.</p>
-                    <span class="collection-cta">Find Your Partner →</span>
-                </div>
-            </a>
-
-            <a href="edu/study/index.html" class="collection-card cc-bluey">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🎓</div>
-                        <span class="collection-badge">9 apps</span>
-                    </div>
-                    <h2>Learner Start</h2>
-                    <p>Flash. Quiz. Focus. Nine study tools — flashcard decks, quiz apps, timer, Cornell notes, habit streak.</p>
-                    <span class="collection-cta">Open the Toolkit →</span>
-                </div>
-            </a>
-
-            <a href="college.html" class="collection-card cc-acid">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">📚</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>For College</h2>
-                    <p>Lonely Socks Club, Captain Safety Meeting, Professor Pizza, Study Roulette, Clean Deputy. Five dorm-grade vibes.</p>
-                    <span class="collection-cta">Hit the Quad →</span>
-                </div>
-            </a>
-
-            <a href="dating.html" class="collection-card cc-ruby">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">♡</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>For Dating</h2>
-                    <p>Cohort seasons, sponsored entry, activity-as-listing, slow letters, group-date-first. Five anti-swipe takes.</p>
-                    <span class="collection-cta">Step Into the Pool →</span>
-                </div>
-            </a>
-
-            <a href="world-cup-pool.html" class="collection-card cc-pitch">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">⚽</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>World Cup Pool</h2>
-                    <p>Bracket picks, score predictions, watch party votes, fan wall, live standings. Run your 2026 pool without a spreadsheet.</p>
-                    <span class="collection-cta">Start Your Pool →</span>
-                </div>
-            </a>
-
-            <a href="golf-league.html" class="collection-card cc-fairway">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">⛳</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>Golf League</h2>
-                    <p>Digital scorecards, handicap tracker, season standings, skins game, tee time sign-ups. Lose the paper, keep the game.</p>
-                    <span class="collection-cta">Tee It Up →</span>
-                </div>
-            </a>
-
-            <a href="fantasy-league.html" class="collection-card cc-blitz">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🏆</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>Fantasy League</h2>
-                    <p>Live draft board, power rankings, trade tracker, trash talk wall, waiver log. Commissioner tools ESPN doesn't give you.</p>
-                    <span class="collection-cta">Run Your League →</span>
-                </div>
-            </a>
-
-            <a href="relationships.html" class="collection-card cc-violet">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">✦</div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>For Relationships</h2>
-                    <p>Long-distance, slow, poly, friend-group-first. Five shapes for relationships that don't fit in a DM thread.</p>
-                    <span class="collection-cta">Five ways out of the swipe →</span>
-                </div>
-            </a>
-
-            <a href="science-kits.html" class="collection-card cc-teal">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v11l3.5 6H5.5L9 14V3z"/><line x1="6" y1="3" x2="18" y2="3"/></svg>
-                        </div>
-                        <span class="collection-badge">5 apps live</span>
-                    </div>
-                    <h2>Science Kits</h2>
-                    <p>Experiment logs, circuit guides, grow trackers, launch debriefs, discovery boards. Five kit companion apps.</p>
-                    <span class="collection-cta">Start Experimenting →</span>
-                </div>
-            </a>
-
-            <a href="mind-games/" class="collection-card cc-violet">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🧩</div>
-                        <span class="collection-badge">32 puzzles live</span>
-                    </div>
-                    <h2>Mind Games</h2>
-                    <p>Word guess, grouping, crossword, letter hive, word trail, box chain, grid logic, pattern play. Thirty-two one-prompt puzzle apps.</p>
-                    <span class="collection-cta">Play →</span>
-                </div>
-            </a>
-
-            <a href="games/" class="collection-card cc-orange">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">🕹</div>
-                        <span class="collection-badge">30 games live</span>
-                    </div>
-                    <h2>Games</h2>
-                    <p>Pinball, retro arcade, classic platformer, modern casual, sports. Thirty single-file React games. All remixable.</p>
-                    <span class="collection-cta">Hit Start →</span>
-                </div>
-            </a>
-
-            <a href="chess.html" class="collection-card cc-amber">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">♟</div>
-                        <span class="collection-badge">6 apps live</span>
-                    </div>
-                    <h2>Chess Variants Lab</h2>
-                    <p>Standard coverage, toroidal wrap-around, Glinski's hex board, 3D multi-layer, AI opponent, position scanner. Six chess apps that each break a different assumption.</p>
-                    <span class="collection-cta">Play →</span>
-                </div>
-            </a>
-
-            <a href="expressions/" class="collection-card cc-bluey">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">~</div>
-                        <span class="collection-badge">80 apps live</span>
-                    </div>
-                    <h2>Expressions</h2>
-                    <p>Eight themed clusters — ambient presence, group play, one-bit status, embodied & weird. Vibes as the shape of a group's life.</p>
-                    <span class="collection-cta">See Expressions →</span>
-                </div>
-            </a>
-
-            <a href="featured-apps/" class="collection-card cc-green">
-                <div class="collection-card-accent"></div>
-                <div class="collection-card-body">
-                    <div class="collection-card-top">
-                        <div class="collection-card-icon">✨</div>
-                        <span class="collection-badge">by category</span>
-                    </div>
-                    <h2>Featured Apps</h2>
-                    <p>Browse the full catalog by category. Try the classics, then remix one as your own.</p>
-                    <span class="collection-cta">Browse Categories →</span>
-                </div>
-            </a>
-
+            <div class="triple-cell">
+                <div class="cell-num">02</div>
+                <h3>Done</h3>
+                <p>It's a real app, live at its own link. Not a prototype. It takes the order the moment it's live — add a payment flow when you're ready.</p>
+            </div>
+            <div class="triple-cell">
+                <div class="cell-num">03</div>
+                <h3>Alive</h3>
+                <p>Keep talking to it and it keeps changing. So can anyone you share it with — seeing a vibe makes you want to change it.</p>
+            </div>
         </div>
     </section>
 
-    <!-- ── Audience pages ── -->
+    <!-- ── Two audiences, one move ── -->
     <section class="index-section">
-        <div class="section-hdr">For Your Situation</div>
-        <div class="cards-container">
-
-            <a href="the-booth.html" class="landing-card the-booth">
-                <div class="card-icon">🏀</div>
-                <h2 class="card-title">The Booth</h2>
-                <p class="card-description">Basketball commentary crew kit: live scoreboard, play glossary, MVP rankings, hot-take board, run-of-show.</p>
-                <span class="card-cta">Call Your Own Game →</span>
-            </a>
-
-            <a href="bridesmaids.html" class="landing-card bridesmaids">
-                <div class="card-icon">💐</div>
-                <h2 class="card-title">Bridesmaids</h2>
-                <p class="card-description">Bachelorette planner, dress tracker, MOH checklist, group gift split, speech timer. Apps for the people actually running the wedding.</p>
-                <span class="card-cta">For the Real MVPs →</span>
-            </a>
-
-            <a href="save-the-date.html" class="landing-card save-the-date">
-                <div class="card-icon">📅</div>
-                <h2 class="card-title">Save the Date</h2>
-                <p class="card-description">Address collector, RSVP tracker, countdown, plus-one manager, event info page. For any event that needs to tell people it's happening.</p>
-                <span class="card-cta">Start the Countdown →</span>
-            </a>
-
-            <a href="wishlist.html" class="landing-card wishlist">
-                <div class="card-icon">🎁</div>
-                <h2 class="card-title">Wishlist</h2>
-                <p class="card-description">Group gift claimer, personal wishlist, baby registry, gift budget, secret santa. For weddings, birthdays, baby showers, and every gift-giving occasion.</p>
-                <span class="card-cta">No More Duplicate Gifts →</span>
-            </a>
-
-            <a href="garage-sale.html" class="landing-card garage-sale">
-                <div class="card-icon">🏷</div>
-                <h2 class="card-title">Garage Sale</h2>
-                <p class="card-description">The Coordinator, Sale Poster, Rate My Thrift, Gear List, Cash Box. Five apps for the person running the neighborhood sale.</p>
-                <span class="card-cta">Start the Sign-Up →</span>
-            </a>
-
-            <a href="growth-writers.html" class="landing-card growth-writers">
-                <div class="card-icon">⌘</div>
-                <h2 class="card-title">Growth Writers</h2>
-                <p class="card-description">AI brief generator, topic cluster maps, idea scoring, audience segmentation, compound tracking. Five strategy tools for systematic publishers. Open source — clone any of them.</p>
-                <span class="card-cta">Open the Brief Factory →</span>
-            </a>
-
-            <a href="would-you-rather.html" class="landing-card wyr">
-                <div class="card-icon">?</div>
-                <h2 class="card-title">Would You Rather</h2>
-                <p class="card-description">Six generators — party mode, deep cuts, food battles, superpowers, tiny decisions, and family silly. Two choices. Everyone votes. Someone's lying.</p>
-                <span class="card-cta">Pick One →</span>
-            </a>
-
-            <a href="babylon-3d.html" class="landing-card babylon-3d">
-                <div class="card-icon">⬡</div>
-                <h2 class="card-title">Babylon 3D + WebXR</h2>
-                <p class="card-description">Particle galaxies, AR anchors, hand tracking, VR graffiti — eight deployed experiences built with one Babylon.js skill and a prompt.</p>
-                <span class="card-cta">Enter the Dimension →</span>
-            </a>
-
-            <a href="music-studio.html" class="landing-card music-studio">
-                <div class="card-icon">♩</div>
-                <h2 class="card-title">Dr. Deas Music Suite</h2>
-                <p class="card-description">Drum machine, pattern library, chord synthesizer — the originals and their 2026 remixes. Web Audio from scratch.</p>
-                <span class="card-cta">Open the Studio →</span>
-            </a>
-
-            <a href="philosophy.html" class="landing-card philosophy">
-                <div class="card-icon">∴</div>
-                <h2 class="card-title">Philosophy</h2>
-                <p class="card-description">Seven thought experiments drawn from the Stanford Encyclopedia — tacit knowledge, embodied cognition, situated epistemology, and the AI consciousness boundary.</p>
-                <span class="card-cta">Start Thinking →</span>
-            </a>
-
-            <a href="electric-psych-rock.html" class="landing-card psych">
-                <div class="card-icon">◈</div>
-                <h2 class="card-title">Deep Cuts</h2>
-                <p class="card-description">Rabbit holes, B-side oracles, listening sessions, and a canon quiz for the psych-curious. Late-60s ecosystem, all the way down.</p>
-                <span class="card-cta">Follow the Maze →</span>
-            </a>
-
-            <a href="bike-summer.html" class="landing-card bike-summer">
-                <div class="card-icon">🚲</div>
-                <h2 class="card-title">Bike Summer</h2>
-                <p class="card-description">Apps for Portland's Pedalpalooza season — find today's rides, log your summer, build a crew, host your first ride.</p>
-                <span class="card-cta">Roll With It →</span>
-            </a>
-
-            <a href="road-trip.html" class="landing-card road-trip">
-                <div class="card-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/></svg>
-                </div>
-                <h2 class="card-title">For Road Trippers</h2>
-                <p class="card-description">Route tips, resource sharing, spontaneous gatherings, and the people you meet along the way.</p>
-                <span class="card-cta">Hit the Road →</span>
-            </a>
-
-            <a href="teachers.html" class="landing-card teachers">
-                <div class="card-icon">📚</div>
-                <h2 class="card-title">For Educators</h2>
-                <p class="card-description">Build classroom tools in minutes. Lesson plans, activities, and educational resources.</p>
-                <span class="card-cta">Start Building →</span>
-            </a>
-
-            <a href="homeschoolers.html" class="landing-card homeschoolers">
-                <div class="card-icon">🏡</div>
-                <h2 class="card-title">For Homeschoolers</h2>
-                <p class="card-description">Curriculum trackers, reading logs, learning journals, and custom schedules.</p>
-                <span class="card-cta">Start Building →</span>
-            </a>
-
-            <a href="coaches.html" class="landing-card coaches">
-                <div class="card-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-                </div>
-                <h2 class="card-title">For Coaches</h2>
-                <p class="card-description">Team hubs for sports: schedules, rosters, playbooks, scoreboards, and updates.</p>
-                <span class="card-cta">Start Coaching →</span>
-            </a>
-
-            <a href="organizers.html" class="landing-card organizers">
-                <div class="card-icon">📋</div>
-                <h2 class="card-title">For Organizers</h2>
-                <p class="card-description">Front desks, renovations, events, households. Build exactly what you need to keep things running.</p>
-                <span class="card-cta">Get Organized →</span>
-            </a>
-
-            <a href="summer-camp.html" class="landing-card summer-camp">
-                <div class="card-icon">⛺</div>
-                <h2 class="card-title">For Summer Camp Staff</h2>
-                <p class="card-description">Arrival check-in, duty rotation, activity sign-ups, lost and found, pickup log. One screen per job.</p>
-                <span class="card-cta">Run Camp →</span>
-            </a>
-
-            <a href="camping.html" class="landing-card camping">
-                <div class="card-icon">🏕️</div>
-                <h2 class="card-title">For Campers</h2>
-                <p class="card-description">Park finder, packing list, meal planner, trail log, and a campfire storytime. Five tools for your next trip.</p>
-                <span class="card-cta">Hit the Trail →</span>
-            </a>
-
-            <a href="church-summer.html" class="landing-card church-summer">
-                <div class="card-icon">☀️</div>
-                <h2 class="card-title">For Church Summer</h2>
-                <p class="card-description">VBS station signup, snack contributions, kids camp roster, small group finder, Sunday volunteer slots.</p>
-                <span class="card-cta">Coordinate Summer →</span>
-            </a>
-
-            <a href="pta-pto.html" class="landing-card pta-pto">
-                <div class="card-icon">🏫</div>
-                <h2 class="card-title">For PTA &amp; PTO</h2>
-                <p class="card-description">Field day stations, teacher appreciation, graduation volunteers, officer handoffs, fundraiser tracking.</p>
-                <span class="card-cta">End the Year Strong →</span>
-            </a>
-
-            <a href="group-chat.html" class="landing-card group-chat">
-                <div class="card-icon">💬</div>
-                <h2 class="card-title">For Group Chats</h2>
-                <p class="card-description">Reply Roulette, Pirate Mode, Colbert's Here, Mood Board. Remix how your group talks.</p>
-                <span class="card-cta">Make It Yours →</span>
-            </a>
-
-            <a href="crew/chaos.html" class="landing-card crew-chaos">
-                <div class="card-icon">⚡</div>
-                <h2 class="card-title">Crew: Chaos</h2>
-                <p class="card-description">Game night, cookout, the group trip. Someone always changes the rules. Your app keeps up.</p>
-                <span class="card-cta">Who Changed the Rules? →</span>
-            </a>
-
-            <a href="crew/the-list.html" class="landing-card crew-list">
-                <div class="card-icon">☑</div>
-                <h2 class="card-title">Crew: The List</h2>
-                <p class="card-description">Groceries, chores, IOUs. The shared doc died in two weeks. This won't.</p>
-                <span class="card-cta">Lists That Last →</span>
-            </a>
-
-            <a href="crew/the-bit.html" class="landing-card crew-bit">
-                <div class="card-icon">✦</div>
-                <h2 class="card-title">Crew: The Bit</h2>
-                <p class="card-description">Bad movie draft. Dinner tournament. Superlatives. Software for an inside joke.</p>
-                <span class="card-cta">Oddly Specific →</span>
-            </a>
-
-            <a href="free-library.html" class="landing-card free-library">
-                <div class="card-icon">📚</div>
-                <h2 class="card-title">For Neighborhood Sharing</h2>
-                <p class="card-description">Book exchange logs, tool shelves, chore swaps, wish boards, block bulletins, seed libraries.</p>
-                <span class="card-cta">Share the Block →</span>
-            </a>
-
-            <a href="tailgate.html" class="landing-card tailgate">
-                <div class="card-icon">🏈</div>
-                <h2 class="card-title">For Tailgates</h2>
-                <p class="card-description">Food signup, carpool board, grill queue, cooler fund, gear checklist. Five tools for the person who always ends up running it.</p>
-                <span class="card-cta">Run the Tailgate →</span>
-            </a>
-
-            <a href="block-party.html" class="landing-card block-party">
-                <div class="card-icon">🎉</div>
-                <h2 class="card-title">For Block Parties</h2>
-                <p class="card-description">Potluck signup, setup crew slots, neighbor directory, permit checklist, supply tracker.</p>
-                <span class="card-cta">Plan the Block →</span>
-            </a>
-
-            <a href="zine.html" class="landing-card zine">
-                <div class="card-icon">📋</div>
-                <h2 class="card-title">For Zines &amp; Collectives</h2>
-                <p class="card-description">Build a zine, band site, or art archive. Public reads. You decide who writes. Full style control.</p>
-                <span class="card-cta">Build Your World →</span>
-            </a>
-
-            <a href="rec-league.html" class="landing-card rec-league">
-                <div class="card-icon">🥎</div>
-                <h2 class="card-title">For Rec Leagues</h2>
-                <p class="card-description">Sub finder, roster builder, game day confirmation, season scoreboard, gear checkout.</p>
-                <span class="card-cta">Run the League →</span>
-            </a>
-
-            <a href="wedding.html" class="landing-card wedding">
-                <div class="card-icon">💍</div>
-                <h2 class="card-title">For Wedding Planners</h2>
-                <p class="card-description">Vendor trackers, client portals, day-of timelines, and RSVP tools — one per wedding, in minutes.</p>
-                <span class="card-cta">Start Planning →</span>
-            </a>
-
-            <a href="contractors.html" class="landing-card contractors">
-                <div class="card-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4l-6 6a2 2 0 0 0 2.8 2.8l6-6a4 4 0 0 0 5.4-5.4l-2.3 2.3-3.4-3.4 2.3-2.3z"/></svg>
-                </div>
-                <h2 class="card-title">For Trades</h2>
-                <p class="card-description">HVAC, electrical, plumbing, permits. Checklists, trackers, and jobsite forms for your crew.</p>
-                <span class="card-cta">Explore Trades →</span>
-            </a>
-
-            <a href="youtubers.html" class="landing-card youtubers">
-                <div class="card-icon">REC</div>
-                <h2 class="card-title">For YouTubers</h2>
-                <p class="card-description">Back-of-house tools for your channel: calendars, sponsor trackers, asset libraries.</p>
-                <span class="card-cta">Run the Channel →</span>
-            </a>
-
-            <a href="puppies.html" class="landing-card puppies">
-                <div class="card-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="7" cy="8" r="2" />
-                        <circle cx="12" cy="6" r="2" />
-                        <circle cx="17" cy="8" r="2" />
-                        <path d="M12 11c-3.6 0-7 3-7 7 0 2.2 1.7 3 3.2 3 1.3 0 2.5-.8 3.8-.8s2.5.8 3.8.8c1.5 0 3.2-.8 3.2-3 0-4-3.4-7-7-7Z" />
-                    </svg>
-                </div>
-                <h2 class="card-title">For Puppy Parents</h2>
-                <p class="card-description">Feeding logs, potty training trackers, vaccine timelines, and milestone journals.</p>
-                <span class="card-cta">Start Tracking →</span>
-            </a>
-
-            <a href="valentines.html" class="landing-card valentines">
-                <div class="card-icon">💝</div>
-                <h2 class="card-title">For Lovers</h2>
-                <p class="card-description">Build something special for your person. Personalized gifts, love letters, romantic surprises.</p>
-                <span class="card-cta">Start Creating →</span>
-            </a>
-
-            <a href="fashion-photographers.html" class="landing-card fashion-photographers">
-                <div class="card-icon">📷</div>
-                <h2 class="card-title">For Fashion Photographers</h2>
-                <p class="card-description">Bid manager, Instagram lead CRM, client log, crew kudos, model feedback, and a daily confidence booster.</p>
-                <span class="card-cta">Run the Back of House →</span>
-            </a>
-
-            <a href="hotwheels.html" class="landing-card hotwheels">
-                <div class="card-icon">🏎️</div>
-                <h2 class="card-title">For Collectors</h2>
-                <p class="card-description">Track, catalog, trade, and showcase your Hot Wheels collection.</p>
-                <span class="card-cta">Start Collecting →</span>
-            </a>
-
-            <a href="reshippers.html" class="landing-card reshippers">
-                <div class="card-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
-                </div>
-                <h2 class="card-title">For Reshippers</h2>
-                <p class="card-description">Electronics parts intake, QC, bin maps, and returns tracking. Ops tools that match your process.</p>
-                <span class="card-cta">Build Ops Tools →</span>
-            </a>
-
+        <div class="section-hdr">From the Group Chat to the Front Counter</div>
+        <div class="two-lane">
+            <div class="lane-half chat">
+                <h3>The group chat</h3>
+                <p>Friends, hobbies, a bit, a night out. Build for fun.</p>
+                <ul>
+                    <li><strong>The teacher</strong> remixes a flashcard vibe into a live trivia game — students change the questions mid-round.</li>
+                    <li><strong>The car club</strong> shares one restoration log; everyone tracks their garage on the same tool.</li>
+                    <li><strong>The group chat</strong> settles best-taco once and for all with a tier-list ranker everyone votes in.</li>
+                </ul>
+            </div>
+            <div class="lane-half counter">
+                <h3>The front counter</h3>
+                <p>The taco truck, the contractor, the shop with a duct-taped spreadsheet. Build to get something done.</p>
+                <ul>
+                    <li><strong>The food truck</strong> posts a daily-specials board that takes the order the moment it's live.</li>
+                    <li><strong>The contractor</strong> replaces texts and a clipboard with jobsite checklists and a customer portal.</li>
+                    <li><strong>The shop</strong> turns the spreadsheet everyone fights over into a form, a dashboard, and one source of truth.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="trust-strip">
+            <strong>You control your app's data.</strong> A new vibe starts private to the people you invite — you choose who can read, write, and open it — and you publish it to the world when you're ready. It's all open source, so anyone can look under the hood.
         </div>
     </section>
 
-    <!-- ── Explore & Build ── -->
+    <!-- ── The medium ── -->
     <section class="index-section">
-        <div class="section-hdr">Explore & Build</div>
-        <div class="cards-container">
-
-            <a href="builders.html" class="landing-card builders">
-                <div class="card-icon">✍️</div>
-                <h2 class="card-title">For Builders</h2>
-                <p class="card-description">A field guide for the new builders. Software used to require developers. Now it requires intent.</p>
-                <span class="card-cta">Start Reading →</span>
-            </a>
-
-            <a href="generate.html" class="landing-card engineers">
-                <div class="card-icon">$_</div>
-                <h2 class="card-title">npx vibes-diy generate</h2>
-                <p class="card-description">One command, one prompt, one live React app. This whole site was built with it — 90+ apps across 12 pages.</p>
-                <span class="card-cta">See the Workflow →</span>
-            </a>
-
-            <a href="sharing.html" class="landing-card sharing">
-                <div class="card-icon">⇄</div>
-                <h2 class="card-title">Sharing &amp; Access</h2>
-                <p class="card-description">Who's in. Who's out. Clone vs Remix. The full reference for sharing and access on Vibes DIY.</p>
-                <span class="card-cta">Read the Reference →</span>
-            </a>
-
-            <a href="vibes-connect/" class="landing-card vibes-connect">
-                <div class="card-icon">⚡</div>
-                <h2 class="card-title">Vibes Connect</h2>
-                <p class="card-description">Your app's live database from any JS backend. Subscribe to real-time changes, write from scripts.</p>
-                <span class="card-cta">Connect Your Data →</span>
-            </a>
-
-            <a href="creator-documentation/" class="landing-card creator-docs">
-                <div class="card-icon">//</div>
-                <h2 class="card-title">Creator Documentation</h2>
-                <p class="card-description">Guides for building apps, scripting against your data, and shipping with the CLI.</p>
-                <span class="card-cta">Read the Docs →</span>
-            </a>
-
-            <a href="built.html" class="landing-card built">
-                <div class="card-icon">📈</div>
-                <h2 class="card-title">How It Gets Built</h2>
-                <p class="card-description">{{daysSince "2025-02-20"}} days, 4,027+ commits, 218K lines, robots on the team. Ten facts from the Vibes DIY build log.</p>
-                <span class="card-cta">Read the Build Log →</span>
-            </a>
-
-            <a href="blog/" class="landing-card blog">
-                <div class="card-icon">✎</div>
-                <h2 class="card-title">Blog</h2>
-                <p class="card-description">Field notes and evals from the build log. Latest: rebuilding a festival app from a single English prompt.</p>
-                <span class="card-cta">Read the Blog →</span>
-            </a>
-
-            <a href="engineers.html" class="landing-card engineers">
-                <div class="card-icon">⌨</div>
-                <h2 class="card-title">For Engineers</h2>
-                <p class="card-description">Open roles on the Vibes DIY launch team. Work on real problems in public with JChris and Meno.</p>
-                <span class="card-cta">Come Build With Us →</span>
-            </a>
-
+        <div class="pull-quote">
+            <blockquote>"Seeing should imply changing."</blockquote>
+            <div class="attribution">The test for everything on this site</div>
         </div>
     </section>
 
-    <div style="padding-bottom: 2rem;"></div>
 {{> newsletter}}
 </main>
