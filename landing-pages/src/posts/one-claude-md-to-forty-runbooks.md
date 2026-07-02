@@ -2,7 +2,7 @@
 title: "From one CLAUDE.md to forty runbooks"
 date: 2026-07-01T09:00:00Z
 author: "Vibes DIY"
-summary: "A year of agent documentation, read straight from git history: a 103-line init file, a 321-line grab-bag, a hard split into version-controlled runbooks — and what each era says about the work we were shipping at the time."
+summary: "A year of agent documentation, read straight from git history: a 103-line init file, a 326-line grab-bag, a hard split into version-controlled runbooks — and what each era says about the work we were shipping at the time."
 thumb: "/images/blog/one-claude-md-to-forty-runbooks/card.jpg"
 ---
 
@@ -21,7 +21,7 @@ That's what agent docs were for in 2025: orienting one assistant, on one laptop,
 
 ## July 2025 – March 2026: the grab-bag era
 
-Then the work changed, and the file changed with it. The repo went monorepo in July 2025 (`CLAUDE.md` followed the code into a subdirectory, then re-grew at the root). The era's actual engineering was packaging: `call-ai`, `use-vibes`, tag-based publishing, a multi-package release train. And the doc grew exactly where that work hurt. By October 2025 it was 321 lines, and the section headings read like scar tissue: *Proper Release Order*. *Build Failure Analysis*. *Prevention Strategy*. And the wonderfully specific *"Call-AI Release Process (MANUAL ONLY — Not for Claude)"* — a heading that exists because, at some point, Claude cut a call-ai release it shouldn't have.
+Then the work changed, and the file changed with it. The repo went monorepo in July 2025 (`CLAUDE.md` followed the code into a subdirectory, then re-grew at the root). The era's actual engineering was packaging: `call-ai`, `use-vibes`, tag-based publishing, a multi-package release train. And the doc grew exactly where that work hurt. By November 2025 it had swelled to 326 lines, and the section headings read like scar tissue: *Proper Release Order*. *Build Failure Analysis*. *Prevention Strategy*. And the wonderfully specific *"Call-AI Release Process (MANUAL ONLY — Not for Claude)"* — a heading that exists because, at some point, Claude cut a call-ai release it shouldn't have.
 
 Two lessons from this era held up. First, **docs accrete where the pain is** — nobody planned a release-process chapter; releases just broke often enough to earn one. Second, one file with no internal structure stops working at a few hundred lines. Everything is equally top-of-mind, which means nothing is: the release rules sat next to the file-structure tour, and an agent loading the whole thing had no signal about what actually mattered for today's task.
 
@@ -50,7 +50,7 @@ Notice what changed in *kind*, not just count. The 2025 file described code. The
     <thead><tr><th>Era</th><th>Shape</th><th>The work at the time</th><th>What docs were for</th></tr></thead>
     <tbody>
         <tr><td>Jun 2025</td><td>One 103-line <code>CLAUDE.md</code></td><td>SPA + chat + Fireproof</td><td>Describe the codebase</td></tr>
-        <tr><td>Jul 2025 – Mar 2026</td><td>One file, peaking at 321 lines</td><td>Monorepo, packages, tag-based publishing</td><td>Stop releases from breaking</td></tr>
+        <tr><td>Jul 2025 – Mar 2026</td><td>One file, peaking at 326 lines</td><td>Monorepo, packages, tag-based publishing</td><td>Stop releases from breaking</td></tr>
         <tr><td>Apr 2026</td><td>27-line hub + <code>agents/</code></td><td>In-place editing pipeline, more parallel sessions</td><td>Make the rules reviewable and shared</td></tr>
         <tr><td>May 2026</td><td>+ repo-backed memory, + skills</td><td>Worktrees, multi-agent dispatch, QA SOPs</td><td>Split "how we work" from "things we invoke"</td></tr>
         <tr><td>Jun 2026 →</td><td>79-line hub + 40 runbooks</td><td>Cloud containers, evals, autonomous merges</td><td>Operate unattended</td></tr>
